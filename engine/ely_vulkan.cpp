@@ -8,7 +8,7 @@ ElyVulkan::ElyVulkan(const char *appName) {
   configCreateInfo();
 
   if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS) {
-    throw std::exception("ERROR :: ElyVulkan :: Failed to create instance");
+    throw std::runtime_error("ERROR :: ElyVulkan :: Failed to create instance");
   }
 }
 

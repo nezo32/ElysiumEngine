@@ -19,6 +19,8 @@ public:
   ElyWindow(const ElyWindow &) = delete;
   ElyWindow &operator=(const ElyWindow &) = delete;
 
+  void CreateWindowSurface(VkInstance instance, VkSurfaceKHR *surface);
   bool ShouldClose() { return glfwWindowShouldClose(window); }
+  void Close() { return glfwSetWindowShouldClose(window, true); }
 };
 } // namespace Ely

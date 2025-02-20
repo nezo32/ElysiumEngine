@@ -2,7 +2,6 @@
 
 #include "external/ely_glfw.h"
 #include <stdexcept>
-#include <vulkan/vulkan.h>
 
 namespace Ely {
 class ElyVulkan {
