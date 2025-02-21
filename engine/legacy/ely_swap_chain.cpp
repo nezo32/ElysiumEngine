@@ -1,4 +1,4 @@
-#include "ely_swap_chain.h"
+#include "ely_swap_chain.hpp"
 
 // std
 #include <array>

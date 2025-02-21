@@ -3,11 +3,11 @@
 #include <memory>
 #include <vector>
 
-#include "elysium/ely_device.h"
-#include "elysium/ely_events.h"
-#include "elysium/ely_pipeline.h"
-#include "elysium/ely_swap_chain.h"
-#include "elysium/ely_window.h"
+#include "elysium/ely_device.hpp"
+#include "elysium/ely_events.hpp"
+#include "elysium/ely_pipeline.hpp"
+#include "elysium/ely_swap_chain.hpp"
+#include "elysium/ely_window.hpp"
 
 class Application {
    public:

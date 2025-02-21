@@ -1,4 +1,4 @@
-#include "ely_device.h"
+#include "ely_device.hpp"
 
 // std headers
 #include <cstring>
@@ -262,29 +262,6 @@ std::vector<const char *> ElyDevice::getRequiredExtensions() {
     }
 
     return extensions;
-}
-
-void ElyDevice::hasGflwRequiredInstanceExtensions() {
-    uint32_t extensionCount = 0;
-    vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
-    std::vector<VkExtensionProperties> extensions(extensionCount);
-    vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data());
-
-    std::cout << "available extensions:" << std::endl;
-    std::unordered_set<std::string> available;
-    for (const auto &extension : extensions) {
-        std::cout << "\t" << extension.extensionName << std::endl;
-        available.insert(extension.extensionName);
-    }
-
-    std::cout << "required extensions:" << std::endl;
-    auto requiredExtensions = getRequiredExtensions();
-    for (const auto &required : requiredExtensions) {
-        std::cout << "\t" << required << std::endl;
-        if (available.find(required) == available.end()) {
-            throw std::runtime_error("Missing required glfw extension");
-        }
-    }
 }
 
 bool ElyDevice::checkDeviceExtensionSupport(VkPhysicalDevice device) {

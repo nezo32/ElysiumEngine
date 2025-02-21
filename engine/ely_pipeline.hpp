@@ -2,7 +2,7 @@
 
 #include <vector>
 
-#include "ely_device.h"
+#include "ely_device.hpp"
 
 namespace Ely {
 
@@ -42,6 +42,8 @@ class ElyPipeline {
     ElyPipeline &operator=(const ElyPipeline &) = delete;
 
     static PipelineConfigInfo defaultPipelineConfigInfo(uint32_t width, uint32_t height);
+
+    void Bind(VkCommandBuffer commandBuffer);
 };
 
 }   // namespace Ely

@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-#include "external/ely_glfw.h"
+#include "external/ely_glfw.hpp"
 
 namespace Ely {
 class ElyWindow {

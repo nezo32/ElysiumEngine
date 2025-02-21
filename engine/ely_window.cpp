@@ -1,10 +1,10 @@
-#include "ely_window.h"
+#include "ely_window.hpp"
 
 namespace Ely {
 
 ElyWindow::ElyWindow(const int &width, const int &height, const char *title) {
     if (glfwInit() == GLFW_FALSE) {
-        throw std::runtime_error("ERROR :: ElyWindow :: Failed to initizalize GLFW");
+        throw std::runtime_error("Failed to initizalize GLFW");
     }
 
     this->setHints();
@@ -12,7 +12,7 @@ ElyWindow::ElyWindow(const int &width, const int &height, const char *title) {
     window = glfwCreateWindow(width, height, title, nullptr, nullptr);
     if (window == NULL) {
         glfwTerminate();
-        throw std::runtime_error("ERROR :: ElyWindow :: Failed to create window");
+        throw std::runtime_error("Failed to create window");
     }
     this->width = width;
     this->height = height;
@@ -30,7 +30,7 @@ void ElyWindow::setHints() {
 
 void ElyWindow::CreateWindowSurface(VkInstance instance, VkSurfaceKHR *surface) {
     if (glfwCreateWindowSurface(instance, window, nullptr, surface) != VK_SUCCESS)
-        throw std::runtime_error("ERROR :: ElyWindow :: Failed to create window surface");
+        throw std::runtime_error("Failed to create window surface");
 }
 
 }   // namespace Ely

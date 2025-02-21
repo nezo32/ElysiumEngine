@@ -16,12 +16,13 @@ else
     set_strip("all")
 end
 
-add_requires("glfw 3.4", "vulkansdk")
-add_packages("glfw", "vulkansdk")
+add_requires("glfw 3.4", "vulkansdk", "glm")
+add_packages("glfw", "vulkansdk", "glm")
 
 target("elysium")
     set_kind("static")
     add_files("engine/*.cpp")
+    add_includedirs("engine/external")
     set_targetdir("ElysiumEngine/lib")
 
     if is_mode("debug") then
@@ -31,8 +32,9 @@ target("elysium")
     after_build(function (target)
         os.rm("ElysiumEngine/includes")
         os.mkdir("ElysiumEngine/includes")
-        os.cp("engine/*.h", "ElysiumEngine/includes/elysium/")
-        os.cp("engine/external/*.h", "ElysiumEngine/includes/elysium/external/")
+        os.cp("engine/*.hpp", "ElysiumEngine/includes/elysium/")
+        os.cp("engine/external/*.hpp", "ElysiumEngine/includes/elysium/external/")
+
     end)
 
 target("app")
@@ -40,6 +42,7 @@ target("app")
     add_files("app/*.cpp")
     add_deps("elysium")
     add_includedirs("ElysiumEngine/includes")
+
 
     if is_mode("debug") then
         add_defines("_DEBUG")

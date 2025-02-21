@@ -4,7 +4,7 @@
 #include <iostream>
 #include <string>
 
-#include "ely_pipeline.h"
+#include "ely_pipeline.hpp"
 
 #ifndef SHADER_DIR
 #define SHADER_DIR "../../../../ElysiumEngine/shaders/"
@@ -32,7 +32,7 @@ std::vector<char> ElyPipeline::readFile(const char *path) {
     std::ifstream file{shaderPath, std::ios::ate | std::ios::binary};
 
     if (!file.is_open()) {
-        throw std::runtime_error("ERROR :: ElyPipeline :: Failed to open file - " + shaderPath);
+        throw std::runtime_error("Failed to open file: " + shaderPath);
     }
 
     size_t fileSize = static_cast<size_t>(file.tellg());
@@ -52,16 +52,14 @@ void ElyPipeline::createShaderModule(const std::vector<char> &shader, VkShaderMo
     createInfo.codeSize = shader.size();
 
     if (vkCreateShaderModule(device.device(), &createInfo, nullptr, module)) {
-        throw std::runtime_error("ERROR :: ElyPipeline :: Failed to create shader module");
+        throw std::runtime_error("Failed to create shader module");
     }
 }
 
 void ElyPipeline::createPipeline(const PipelineConfigInfo &configInfo, const char *vertexPath,
                                  const char *fragmentPath) {
-    assert(configInfo.pipelineLayout != VK_NULL_HANDLE &&
-           "ERROR :: ElyPipeline :: Failed to create pipeline :: no pipelineLayout provided");
-    assert(configInfo.renderPass != VK_NULL_HANDLE &&
-           "ERROR :: ElyPipeline :: Failed to create pipeline :: no renderPass provided");
+    assert(configInfo.pipelineLayout != VK_NULL_HANDLE && "Failed to create pipeline: no pipelineLayout provided");
+    assert(configInfo.renderPass != VK_NULL_HANDLE && "Failed to create pipeline: no renderPass provided");
 
     auto vertex = readFile(vertexPath);
     auto fragment = readFile(fragmentPath);
@@ -132,7 +130,7 @@ void ElyPipeline::createPipeline(const PipelineConfigInfo &configInfo, const cha
 
     if (vkCreateGraphicsPipelines(device.device(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &pipeline) !=
         VK_SUCCESS) {
-        throw std::runtime_error("ERROR :: ElyPipeline :: Failed to create pipeline");
+        throw std::runtime_error("Failed to create pipeline");
     }
 }
 
@@ -205,6 +203,10 @@ PipelineConfigInfo ElyPipeline::defaultPipelineConfigInfo(uint32_t width, uint32
     configInfo.depthStencilInfo.back = {};    // Optional
 
     return configInfo;
+}
+
+void ElyPipeline::Bind(VkCommandBuffer commandBuffer) {
+    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 }
 
 }   // namespace Ely
