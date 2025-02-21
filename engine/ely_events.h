@@ -5,9 +5,9 @@
 namespace Ely {
 
 class ElyEvents {
-private:
-public:
-  static void PollEvents() { glfwPollEvents(); };
+   private:
+   public:
+    static void PollEvents() { glfwPollEvents(); };
 };
 
-} // namespace Ely
+}   // namespace Ely
