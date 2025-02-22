@@ -1,11 +1,11 @@
-#include "ely_logic_device.hpp"
+#include "ely_device.hpp"
 
 #include "ely_queue_families.hpp"
 
 namespace Ely {
 
-ElyLogicDevice::ElyLogicDevice(ElyPhysDevice &physDevice) : elyPhysDevice(physDevice) {
-    QueueFamilyIndices indices = ElyQueueFamilies::FindQueueFamilies(elyPhysDevice.GetPhysicalDevice());
+ElyDevice::ElyDevice(ElyPhysDevice &physDevice) {
+    QueueFamilyIndices indices = ElyQueueFamilies::FindQueueFamilies(physDevice.GetPhysicalDevice());
 
     float queuePriority = 1.0f;
 
@@ -24,13 +24,13 @@ ElyLogicDevice::ElyLogicDevice(ElyPhysDevice &physDevice) : elyPhysDevice(physDe
     createInfo.pEnabledFeatures = &deviceFeatures;
     createInfo.enabledExtensionCount = 0;
 
-    if (vkCreateDevice(elyPhysDevice.GetPhysicalDevice(), &createInfo, nullptr, &device) != VK_SUCCESS) {
+    if (vkCreateDevice(physDevice.GetPhysicalDevice(), &createInfo, nullptr, &device) != VK_SUCCESS) {
         throw std::runtime_error("Failed to create logical device");
     }
 
     vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
 }
 
-ElyLogicDevice::~ElyLogicDevice() { vkDestroyDevice(device, nullptr); }
+ElyDevice::~ElyDevice() { vkDestroyDevice(device, nullptr); }
 
 }   // namespace Ely

@@ -10,7 +10,7 @@ class ElyPhysDevice {
     VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
 
     void pickPhysicalDevice();
-    int rateDeviceSuitability(VkPhysicalDevice device);
+    uint32_t rateDeviceSuitability(VkPhysicalDevice device);
 
    public:
     ElyPhysDevice(ElyVulkan &vulkan);

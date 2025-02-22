@@ -20,9 +20,9 @@ void ElyPhysDevice::pickPhysicalDevice() {
     std::vector<VkPhysicalDevice> devices(deviceCount);
     vkEnumeratePhysicalDevices(elyVulkan.GetInstance(), &deviceCount, devices.data());
 
-    std::multimap<int, VkPhysicalDevice> candidates;
+    std::multimap<uint32_t, VkPhysicalDevice> candidates;
     for (const auto& device : devices) {
-        int score = rateDeviceSuitability(device);
+        uint32_t score = rateDeviceSuitability(device);
         candidates.insert(std::make_pair(score, device));
     }
 
@@ -34,13 +34,13 @@ void ElyPhysDevice::pickPhysicalDevice() {
     }
 }
 
-int ElyPhysDevice::rateDeviceSuitability(VkPhysicalDevice device) {
+uint32_t ElyPhysDevice::rateDeviceSuitability(VkPhysicalDevice device) {
     VkPhysicalDeviceProperties deviceProperties{};
     VkPhysicalDeviceFeatures deviceFeatures{};
     vkGetPhysicalDeviceProperties(device, &deviceProperties);
     vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
 
-    int score = 0;
+    uint32_t score = 0;
     if (deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
         score += 1000;
     }

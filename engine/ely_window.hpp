@@ -20,7 +20,9 @@ class ElyWindow {
     ElyWindow(const ElyWindow &) = delete;
     ElyWindow &operator=(const ElyWindow &) = delete;
 
-    VkExtent2D GetExtent() { return {static_cast<uint32_t>(width), static_cast<uint32_t>(height)}; }
+    uint32_t GetWidth() { return static_cast<uint32_t>(width); }
+    uint32_t GetHeight() { return static_cast<uint32_t>(height); }
+    VkExtent2D GetExtent() { return {GetWidth(), GetHeight()}; }
     void CreateWindowSurface(VkInstance instance, VkSurfaceKHR *surface);
     bool ShouldClose() { return glfwWindowShouldClose(window); }
     void Close() { return glfwSetWindowShouldClose(window, true); }

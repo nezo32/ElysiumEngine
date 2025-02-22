@@ -19,9 +19,9 @@ ElyPipeline::ElyPipeline(ElyDevice &d, const PipelineConfigInfo &configInfo, con
 }
 
 ElyPipeline::~ElyPipeline() {
-    vkDestroyShaderModule(device.device(), vertexModule, nullptr);
-    vkDestroyShaderModule(device.device(), fragmentModule, nullptr);
-    vkDestroyPipeline(device.device(), pipeline, nullptr);
+    vkDestroyShaderModule(device.GetDevice(), vertexModule, nullptr);
+    vkDestroyShaderModule(device.GetDevice(), fragmentModule, nullptr);
+    vkDestroyPipeline(device.GetDevice(), pipeline, nullptr);
 }
 
 std::vector<char> ElyPipeline::readFile(const char *path) {
@@ -51,7 +51,7 @@ void ElyPipeline::createShaderModule(const std::vector<char> &shader, VkShaderMo
     createInfo.pCode = reinterpret_cast<const uint32_t *>(shader.data());
     createInfo.codeSize = shader.size();
 
-    if (vkCreateShaderModule(device.device(), &createInfo, nullptr, module)) {
+    if (vkCreateShaderModule(device.GetDevice(), &createInfo, nullptr, module)) {
         throw std::runtime_error("Failed to create shader module");
     }
 }
@@ -128,7 +128,7 @@ void ElyPipeline::createPipeline(const PipelineConfigInfo &configInfo, const cha
     pipelineInfo.basePipelineIndex = -1;
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 
-    if (vkCreateGraphicsPipelines(device.device(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &pipeline) !=
+    if (vkCreateGraphicsPipelines(device.GetDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &pipeline) !=
         VK_SUCCESS) {
         throw std::runtime_error("Failed to create pipeline");
     }
