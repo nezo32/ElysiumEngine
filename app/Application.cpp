@@ -5,7 +5,7 @@
 #include "elysium/ely_events.hpp"
 
 void Application::Run() {
-    while (!e.elyWindow.ShouldClose()) {
+    while (!e.window.ShouldClose()) {
         Ely::Events::PollEvents();
         // drawFrame();
     }

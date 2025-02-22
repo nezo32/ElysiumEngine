@@ -8,7 +8,7 @@
 namespace Ely {
 class Elysium {
    public:
-    Elysium(const int& windowWidth, const int& windowHeight, const char* windowTitle, const char* appName,
+    Elysium(const int windowWidth, const int windowHeight, const char* windowTitle, const char* appName,
             const uint32_t appVersion)
         : window{windowWidth, windowHeight, windowTitle}, vulkan{window, appName, appVersion} {}
 

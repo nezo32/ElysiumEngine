@@ -15,7 +15,7 @@ class Window {
     void setHints();
 
    public:
-    Window(const int &width, const int &height, const char *title);
+    Window(const int width, const int height, const char *title);
     ~Window();
 
     Window(const Window &) = delete;

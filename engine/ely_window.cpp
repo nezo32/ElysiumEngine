@@ -2,7 +2,7 @@
 
 namespace Ely {
 
-Window::Window(const int &width, const int &height, const char *title) {
+Window::Window(const int width, const int height, const char *title) {
     if (glfwInit() == GLFW_FALSE) {
         throw std::runtime_error("Failed to initizalize GLFW");
     }
