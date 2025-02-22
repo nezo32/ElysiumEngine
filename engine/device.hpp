@@ -1,8 +1,9 @@
 #pragma once
 
-#include "ely_phys_device.hpp"
-#include "ely_vulkan.hpp"
-#include "external/ely_glfw.hpp"
+#include "external/glfw.hpp"
+#include "phys_device.hpp"
+#include "vulkan.hpp"
+
 
 namespace Ely {
 class PhysDevice;

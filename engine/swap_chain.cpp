@@ -1,9 +1,9 @@
-#include "ely_swap_chain.hpp"
+#include "swap_chain.hpp"
 
 #include <algorithm>
 #include <limits>
 
-#include "ely_queue_families.hpp"
+#include "queue_families.hpp"
 
 namespace Ely {
 SwapChain::SwapChain(Window &window, Vulkan &vulkan, PhysDevice &physDevice, Device &device)

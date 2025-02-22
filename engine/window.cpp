@@ -1,4 +1,4 @@
-#include "ely_window.hpp"
+#include "window.hpp"
 
 namespace Ely {
 

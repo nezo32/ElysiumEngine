@@ -1,9 +1,9 @@
 
 
-#include "ely_device.hpp"
-#include "ely_events.hpp"
-#include "ely_pipeline.hpp"
-#include "ely_window.hpp"
+#include "device.hpp"
+#include "events.hpp"
+#include "pipeline.hpp"
+#include "window.hpp"
 
 namespace Ely {
 class Elysium {

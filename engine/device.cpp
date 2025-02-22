@@ -1,8 +1,8 @@
-#include "ely_device.hpp"
+#include "device.hpp"
 
 #include <set>
 
-#include "ely_queue_families.hpp"
+#include "queue_families.hpp"
 
 namespace Ely {
 

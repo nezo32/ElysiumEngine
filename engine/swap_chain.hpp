@@ -2,11 +2,12 @@
 
 #include <vector>
 
-#include "ely_device.hpp"
-#include "ely_phys_device.hpp"
-#include "ely_vulkan.hpp"
-#include "ely_window.hpp"
-#include "external/ely_glfw.hpp"
+#include "device.hpp"
+#include "external/glfw.hpp"
+#include "phys_device.hpp"
+#include "vulkan.hpp"
+#include "window.hpp"
+
 
 namespace Ely {
 struct SwapChainSupportDetails {

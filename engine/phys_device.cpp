@@ -1,11 +1,11 @@
-#include "ely_phys_device.hpp"
+#include "phys_device.hpp"
 
 #include <iostream>
 #include <map>
 #include <set>
 
-#include "ely_queue_families.hpp"
-#include "ely_swap_chain.hpp"
+#include "queue_families.hpp"
+#include "swap_chain.hpp"
 
 namespace Ely {
 

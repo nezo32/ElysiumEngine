@@ -2,7 +2,7 @@
 
 #include <array>
 
-#include "elysium/ely_events.hpp"
+#include "elysium/events.hpp"
 
 void Application::Run() {
     while (!e.window.ShouldClose()) {

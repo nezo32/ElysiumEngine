@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-#include "ely_window.hpp"
+#include "window.hpp"
 
 namespace Ely {
 

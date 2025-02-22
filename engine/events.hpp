@@ -1,6 +1,6 @@
 #pragma once
 
-#include "external/ely_glfw.hpp"
+#include "external/glfw.hpp"
 
 namespace Ely {
 

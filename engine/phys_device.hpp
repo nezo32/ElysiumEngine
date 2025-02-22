@@ -1,9 +1,10 @@
 #pragma once
 
-#include "ely_swap_chain.hpp"
-#include "ely_vulkan.hpp"
-#include "ely_window.hpp"
-#include "external/ely_glfw.hpp"
+#include "external/glfw.hpp"
+#include "swap_chain.hpp"
+#include "vulkan.hpp"
+#include "window.hpp"
+
 
 namespace Ely {
 class PhysDevice {

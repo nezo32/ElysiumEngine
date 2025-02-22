@@ -3,8 +3,9 @@
 #include <stdexcept>
 #include <vector>
 
-#include "ely_window.hpp"
-#include "external/ely_glfw.hpp"
+#include "external/glfw.hpp"
+#include "window.hpp"
+
 
 namespace Ely {
 static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,

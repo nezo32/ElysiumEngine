@@ -3,8 +3,8 @@
 #include <string>
 #include <vector>
 
-#include "ely_device.hpp"
-#include "external/ely_glfw.hpp"
+#include "device.hpp"
+#include "external/glfw.hpp"
 
 namespace Ely {
 

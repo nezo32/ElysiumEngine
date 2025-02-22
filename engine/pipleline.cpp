@@ -4,7 +4,7 @@
 #include <iostream>
 #include <string>
 
-#include "ely_pipeline.hpp"
+#include "pipeline.hpp"
 
 #ifndef SHADER_DIR
 #define SHADER_DIR "../../../../ElysiumEngine/shaders/"
