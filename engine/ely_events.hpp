@@ -4,7 +4,7 @@
 
 namespace Ely {
 
-class ElyEvents {
+class Events {
    private:
    public:
     static void PollEvents() { glfwPollEvents(); };

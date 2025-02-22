@@ -1,22 +1,25 @@
 #pragma once
 
 #include "ely_phys_device.hpp"
+#include "ely_vulkan.hpp"
 #include "external/ely_glfw.hpp"
 
 namespace Ely {
-class ElyDevice {
+class PhysDevice;
+class Device {
    private:
     VkDevice device;
     VkQueue graphicsQueue;
+    VkQueue presentQueue;
 
    public:
-    ElyDevice(ElyPhysDevice &physDevice);
-    ~ElyDevice();
+    Device(Vulkan &Vulkan, PhysDevice &physDevice);
+    ~Device();
 
-    ElyDevice(const ElyDevice &) = delete;
-    ElyDevice &operator=(const ElyDevice &) = delete;
-    ElyDevice(ElyDevice &&) = delete;
-    ElyDevice &operator=(ElyDevice &&) = delete;
+    Device(const Device &) = delete;
+    Device &operator=(const Device &) = delete;
+    Device(Device &&) = delete;
+    Device &operator=(Device &&) = delete;
 
     VkDevice GetDevice() { return device; }
 };

@@ -1,25 +1,28 @@
 #pragma once
 
+#include "ely_swap_chain.hpp"
 #include "ely_vulkan.hpp"
+#include "ely_window.hpp"
 #include "external/ely_glfw.hpp"
 
 namespace Ely {
-class ElyPhysDevice {
+class PhysDevice {
    private:
-    ElyVulkan &elyVulkan;
+    Vulkan &elyVulkan;
     VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
 
     void pickPhysicalDevice();
     uint32_t rateDeviceSuitability(VkPhysicalDevice device);
+    bool checkDeviceExtensionSupport(VkPhysicalDevice device);
 
    public:
-    ElyPhysDevice(ElyVulkan &vulkan);
-    ~ElyPhysDevice();
+    PhysDevice(Vulkan &vulkan);
+    ~PhysDevice();
 
-    ElyPhysDevice(const ElyPhysDevice &) = delete;
-    ElyPhysDevice &operator=(const ElyPhysDevice &) = delete;
-    ElyPhysDevice(ElyPhysDevice &&) = delete;
-    ElyPhysDevice &operator=(ElyPhysDevice &&) = delete;
+    PhysDevice(const PhysDevice &) = delete;
+    PhysDevice &operator=(const PhysDevice &) = delete;
+    PhysDevice(PhysDevice &&) = delete;
+    PhysDevice &operator=(PhysDevice &&) = delete;
 
     VkPhysicalDevice GetPhysicalDevice() { return physicalDevice; }
 };

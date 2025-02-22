@@ -5,24 +5,28 @@
 #include "external/ely_glfw.hpp"
 
 namespace Ely {
-class ElyWindow {
+class Window {
    private:
     GLFWwindow *window;
+
     int width;
     int height;
 
     void setHints();
 
    public:
-    ElyWindow(const int &width, const int &height, const char *title);
-    ~ElyWindow();
+    Window(const int &width, const int &height, const char *title);
+    ~Window();
 
-    ElyWindow(const ElyWindow &) = delete;
-    ElyWindow &operator=(const ElyWindow &) = delete;
+    Window(const Window &) = delete;
+    Window &operator=(const Window &) = delete;
+
+    GLFWwindow *GetWindow() { return window; }
 
     uint32_t GetWidth() { return static_cast<uint32_t>(width); }
     uint32_t GetHeight() { return static_cast<uint32_t>(height); }
     VkExtent2D GetExtent() { return {GetWidth(), GetHeight()}; }
+
     void CreateWindowSurface(VkInstance instance, VkSurfaceKHR *surface);
     bool ShouldClose() { return glfwWindowShouldClose(window); }
     void Close() { return glfwSetWindowShouldClose(window, true); }

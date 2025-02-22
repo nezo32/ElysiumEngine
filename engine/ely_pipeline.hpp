@@ -21,26 +21,25 @@ struct PipelineConfigInfo {
     uint32_t subpass = 0;
 };
 
-class ElyPipeline {
+class Pipeline {
    private:
     static std::vector<char> readFile(const char *path);
     void createPipeline(const PipelineConfigInfo &configInfo, const char *vertexPath, const char *fragmentPath);
 
     void createShaderModule(const std::vector<char> &shader, VkShaderModule *module);
 
-    ElyDevice &device;
+    Device &device;
     VkPipeline pipeline;
     VkShaderModule vertexModule;
     VkShaderModule fragmentModule;
 
    public:
-    ElyPipeline(ElyDevice &device, const PipelineConfigInfo &configInfo, const char *vertexPath,
-                const char *fragmentPath);
+    Pipeline(Device &device, const PipelineConfigInfo &configInfo, const char *vertexPath, const char *fragmentPath);
 
-    ~ElyPipeline();
+    ~Pipeline();
 
-    ElyPipeline(const ElyPipeline &) = delete;
-    ElyPipeline &operator=(const ElyPipeline &) = delete;
+    Pipeline(const Pipeline &) = delete;
+    Pipeline &operator=(const Pipeline &) = delete;
 
     static PipelineConfigInfo defaultPipelineConfigInfo(uint32_t width, uint32_t height);
 

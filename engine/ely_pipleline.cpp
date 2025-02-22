@@ -12,19 +12,18 @@
 
 namespace Ely {
 
-ElyPipeline::ElyPipeline(ElyDevice &d, const PipelineConfigInfo &configInfo, const char *vertexPath,
-                         const char *fragmentPath)
+Pipeline::Pipeline(Device &d, const PipelineConfigInfo &configInfo, const char *vertexPath, const char *fragmentPath)
     : device{d} {
     createPipeline(configInfo, vertexPath, fragmentPath);
 }
 
-ElyPipeline::~ElyPipeline() {
+Pipeline::~Pipeline() {
     vkDestroyShaderModule(device.GetDevice(), vertexModule, nullptr);
     vkDestroyShaderModule(device.GetDevice(), fragmentModule, nullptr);
     vkDestroyPipeline(device.GetDevice(), pipeline, nullptr);
 }
 
-std::vector<char> ElyPipeline::readFile(const char *path) {
+std::vector<char> Pipeline::readFile(const char *path) {
     namespace fs = std::filesystem;
     fs::path filePath(std::string(SHADER_DIR) + path);
     std::string shaderPath = fs::canonical(filePath).generic_string();
@@ -45,7 +44,7 @@ std::vector<char> ElyPipeline::readFile(const char *path) {
     return buffer;
 }
 
-void ElyPipeline::createShaderModule(const std::vector<char> &shader, VkShaderModule *module) {
+void Pipeline::createShaderModule(const std::vector<char> &shader, VkShaderModule *module) {
     VkShaderModuleCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
     createInfo.pCode = reinterpret_cast<const uint32_t *>(shader.data());
@@ -56,8 +55,7 @@ void ElyPipeline::createShaderModule(const std::vector<char> &shader, VkShaderMo
     }
 }
 
-void ElyPipeline::createPipeline(const PipelineConfigInfo &configInfo, const char *vertexPath,
-                                 const char *fragmentPath) {
+void Pipeline::createPipeline(const PipelineConfigInfo &configInfo, const char *vertexPath, const char *fragmentPath) {
     assert(configInfo.pipelineLayout != VK_NULL_HANDLE && "Failed to create pipeline: no pipelineLayout provided");
     assert(configInfo.renderPass != VK_NULL_HANDLE && "Failed to create pipeline: no renderPass provided");
 
@@ -134,7 +132,7 @@ void ElyPipeline::createPipeline(const PipelineConfigInfo &configInfo, const cha
     }
 }
 
-PipelineConfigInfo ElyPipeline::defaultPipelineConfigInfo(uint32_t width, uint32_t height) {
+PipelineConfigInfo Pipeline::defaultPipelineConfigInfo(uint32_t width, uint32_t height) {
     PipelineConfigInfo configInfo{};
 
     configInfo.assemblyInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -205,7 +203,7 @@ PipelineConfigInfo ElyPipeline::defaultPipelineConfigInfo(uint32_t width, uint32
     return configInfo;
 }
 
-void ElyPipeline::Bind(VkCommandBuffer commandBuffer) {
+void Pipeline::Bind(VkCommandBuffer commandBuffer) {
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 }
 

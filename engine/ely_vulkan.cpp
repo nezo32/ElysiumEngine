@@ -2,26 +2,29 @@
 #include "ely_vulkan.hpp"
 
 #include <iostream>
+#include <unordered_set>
 
 namespace Ely {
 
-ElyVulkan::ElyVulkan(const char *appName, uint32_t appVersion) {
+Vulkan::Vulkan(Window &elyWindow, const char *appName, uint32_t appVersion) {
     auto debugInfo = createDebugMessengerInfo();
 
     createVulkanInstance(appName, appVersion, &debugInfo);
     createDebugUtilsMessenger(&debugInfo);
+    elyWindow.CreateWindowSurface(instance, &surface);
 }
 
-ElyVulkan::~ElyVulkan() {
+Vulkan::~Vulkan() {
     if (enableValidationLayers) {
         DestroyDebugUtilsMessengerEXT(instance, debugMessenger, nullptr);
     }
+    vkDestroySurfaceKHR(instance, surface, nullptr);
     vkDestroyInstance(instance, nullptr);
 }
 
 // VULKAN INSTANCE
-void ElyVulkan::createVulkanInstance(const char *appName, uint32_t appVersion,
-                                     VkDebugUtilsMessengerCreateInfoEXT *debugInfo) {
+void Vulkan::createVulkanInstance(const char *appName, uint32_t appVersion,
+                                  VkDebugUtilsMessengerCreateInfoEXT *debugInfo) {
     if (enableValidationLayers && !checkValidationLayerSupport()) {
         throw std::runtime_error("Validation layers requested, but not available");
     }
@@ -47,20 +50,24 @@ void ElyVulkan::createVulkanInstance(const char *appName, uint32_t appVersion,
     if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS) {
         throw std::runtime_error("Failed to create instance");
     }
+
+#ifdef _DEBUG
+    debugExtensions();
+#endif
 }
 
-VkApplicationInfo ElyVulkan::createApplicationInfo(const char *appName, uint32_t appVersion) {
+VkApplicationInfo Vulkan::createApplicationInfo(const char *appName, uint32_t appVersion) {
     VkApplicationInfo appInfo{};
     appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
     appInfo.pApplicationName = appName;
     appInfo.applicationVersion = appVersion;
-    appInfo.pEngineName = "Elysium";
+    appInfo.pEngineName = "sium";
     appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
     appInfo.apiVersion = VK_API_VERSION_1_0;
     return appInfo;
 }
 
-bool ElyVulkan::checkValidationLayerSupport() {
+bool Vulkan::checkValidationLayerSupport() {
     uint32_t layerCount;
     vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
 
@@ -85,7 +92,7 @@ bool ElyVulkan::checkValidationLayerSupport() {
     return true;
 }
 
-std::vector<const char *> ElyVulkan::getRequiredInstanceExtensions() {
+std::vector<const char *> Vulkan::getRequiredInstanceExtensions() {
     uint32_t glfwExtensionCount = 0;
     const char **glfwExtensions;
     glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
@@ -99,8 +106,31 @@ std::vector<const char *> ElyVulkan::getRequiredInstanceExtensions() {
     return extensions;
 }
 
+void Vulkan::debugExtensions() {
+    uint32_t extensionCount = 0;
+    vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
+    std::vector<VkExtensionProperties> extensions(extensionCount);
+    vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data());
+
+    std::cout << "available extensions:" << std::endl;
+    std::unordered_set<std::string> available;
+    for (const auto &extension : extensions) {
+        std::cout << "\t" << extension.extensionName << std::endl;
+        available.insert(extension.extensionName);
+    }
+
+    std::cout << "required extensions:" << std::endl;
+    auto requiredExtensions = getRequiredInstanceExtensions();
+    for (const auto &required : requiredExtensions) {
+        std::cout << "\t" << required << std::endl;
+        if (available.find(required) == available.end()) {
+            throw std::runtime_error("Missing required glfw extension");
+        }
+    }
+}
+
 // DEBUG MESSENGER
-void ElyVulkan::createDebugUtilsMessenger(VkDebugUtilsMessengerCreateInfoEXT *createInfo) {
+void Vulkan::createDebugUtilsMessenger(VkDebugUtilsMessengerCreateInfoEXT *createInfo) {
     if (!enableValidationLayers)
         return;
     if (CreateDebugUtilsMessengerEXT(instance, createInfo, nullptr, &debugMessenger) != VK_SUCCESS) {
@@ -128,7 +158,7 @@ static void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMesse
     }
 }
 
-VkDebugUtilsMessengerCreateInfoEXT ElyVulkan::createDebugMessengerInfo() {
+VkDebugUtilsMessengerCreateInfoEXT Vulkan::createDebugMessengerInfo() {
     VkDebugUtilsMessengerCreateInfoEXT createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
     createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
@@ -146,6 +176,9 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityF
                                                     VkDebugUtilsMessageTypeFlagsEXT messageType,
                                                     const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
                                                     void *pUserData) {
+    if (messageSeverity < VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
+        return VK_FALSE;
+
     if (messageType == VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT) {
         std::cerr << "Validation callback: General error: " << pCallbackData->pMessage << std::endl;
     }

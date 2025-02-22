@@ -21,6 +21,7 @@ add_packages("glfw", "vulkansdk", "glm")
 
 target("elysium")
     set_kind("static")
+    
     add_files("engine/*.cpp")
     add_includedirs("engine/external")
     set_targetdir("ElysiumEngine/lib")
