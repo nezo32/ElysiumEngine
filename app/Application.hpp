@@ -9,12 +9,6 @@ class Application {
    public:
     void Run();
 
-    Application();
-    ~Application();
-
-    Application(const Application &) = delete;
-    Application &operator=(const Application &) = delete;
-
    private:
     static constexpr int WIDTH = 1280;
     static constexpr int HEIGHT = 720;

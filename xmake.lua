@@ -23,9 +23,10 @@ target("elysium")
     set_kind("static")
     
     add_files("engine/*.cpp")
-    add_includedirs("engine/external")
+    add_files("engine/**/*.cpp")
+    add_includedirs("engine")
     set_targetdir("ElysiumEngine/lib")
-
+    
     if is_mode("debug") then
         add_defines("_DEBUG")
     end
@@ -35,7 +36,10 @@ target("elysium")
         os.mkdir("ElysiumEngine/includes")
         os.cp("engine/*.hpp", "ElysiumEngine/includes/elysium/")
         os.cp("engine/external/*.hpp", "ElysiumEngine/includes/elysium/external/")
-
+        os.cp("engine/command/*.hpp", "ElysiumEngine/includes/elysium/command/")
+        os.cp("engine/pipeline/*.hpp", "ElysiumEngine/includes/elysium/pipeline/")
+        os.cp("engine/utils/*.hpp", "ElysiumEngine/includes/elysium/utils/")
+        os.cp("engine/device/*.hpp", "ElysiumEngine/includes/elysium/device/")
     end)
 
 target("app")

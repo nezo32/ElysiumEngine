@@ -5,6 +5,7 @@
 #include <string>
 
 #include "pipeline.hpp"
+#include "utils/debug_log.hpp"
 
 #ifndef SHADER_DIR
 #define SHADER_DIR "../../../../ElysiumEngine/shaders/"
@@ -96,13 +97,17 @@ void Pipeline::createPipeline(const PipelineConfigInfo &configInfo, const char *
     vertexInputInfo.pVertexAttributeDescriptions = nullptr;
     vertexInputInfo.pVertexBindingDescriptions = nullptr;
 
+    // DYNAMIC STATE
+    VkPipelineDynamicStateCreateInfo dynamicState{};
+    dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+    dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
+    dynamicState.pDynamicStates = dynamicStates.data();
+
     // VIEWPORT INFO
     VkPipelineViewportStateCreateInfo viewportInfo{};
     viewportInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
     viewportInfo.viewportCount = 1;
-    viewportInfo.pViewports = &configInfo.viewport;
     viewportInfo.scissorCount = 1;
-    viewportInfo.pScissors = &configInfo.scissor;
 
     // PIPELINE INFO
     VkGraphicsPipelineCreateInfo pipelineInfo{};
@@ -113,7 +118,7 @@ void Pipeline::createPipeline(const PipelineConfigInfo &configInfo, const char *
     pipelineInfo.pMultisampleState = &configInfo.multisampleInfo;
     pipelineInfo.pColorBlendState = &configInfo.blendInfo;
     pipelineInfo.pDepthStencilState = &configInfo.depthStencilInfo;
-    pipelineInfo.pDynamicState = nullptr;
+    pipelineInfo.pDynamicState = &dynamicState;
 
     pipelineInfo.stageCount = 2;
     pipelineInfo.pStages = shaderStages;
@@ -132,22 +137,12 @@ void Pipeline::createPipeline(const PipelineConfigInfo &configInfo, const char *
     }
 }
 
-PipelineConfigInfo Pipeline::defaultPipelineConfigInfo(uint32_t width, uint32_t height) {
+PipelineConfigInfo Pipeline::defaultPipelineConfigInfo(VkRenderPass renderPass, VkPipelineLayout pipelineLayout) {
     PipelineConfigInfo configInfo{};
 
     configInfo.assemblyInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
     configInfo.assemblyInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
     configInfo.assemblyInfo.primitiveRestartEnable = VK_FALSE;
-
-    configInfo.viewport.x = 0.0f;
-    configInfo.viewport.y = 0.0f;
-    configInfo.viewport.width = static_cast<float>(width);
-    configInfo.viewport.height = static_cast<float>(height);
-    configInfo.viewport.minDepth = 0.0f;
-    configInfo.viewport.maxDepth = 1.0f;
-
-    configInfo.scissor.offset = {0, 0};
-    configInfo.scissor.extent = {width, height};
 
     configInfo.rasterizationInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
     configInfo.rasterizationInfo.depthClampEnable = VK_FALSE;
@@ -199,6 +194,9 @@ PipelineConfigInfo Pipeline::defaultPipelineConfigInfo(uint32_t width, uint32_t 
     configInfo.depthStencilInfo.stencilTestEnable = VK_FALSE;
     configInfo.depthStencilInfo.front = {};   // Optional
     configInfo.depthStencilInfo.back = {};    // Optional
+
+    configInfo.renderPass = renderPass;
+    configInfo.pipelineLayout = pipelineLayout;
 
     return configInfo;
 }

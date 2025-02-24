@@ -2,14 +2,12 @@
 
 #include <vector>
 
-#include "device.hpp"
+#include "device/device.hpp"
 #include "external/glfw.hpp"
 
 namespace Ely {
 
 struct PipelineConfigInfo {
-    VkViewport viewport;
-    VkRect2D scissor;
     VkPipelineInputAssemblyStateCreateInfo assemblyInfo;
     VkPipelineRasterizationStateCreateInfo rasterizationInfo;
     VkPipelineMultisampleStateCreateInfo multisampleInfo;
@@ -33,6 +31,8 @@ class Pipeline {
     VkShaderModule vertexModule;
     VkShaderModule fragmentModule;
 
+    static inline std::vector<VkDynamicState> dynamicStates = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
+
    public:
     Pipeline(Device &device, const PipelineConfigInfo &configInfo, const char *vertexPath, const char *fragmentPath);
 
@@ -41,7 +41,7 @@ class Pipeline {
     Pipeline(const Pipeline &) = delete;
     Pipeline &operator=(const Pipeline &) = delete;
 
-    static PipelineConfigInfo defaultPipelineConfigInfo(uint32_t width, uint32_t height);
+    static PipelineConfigInfo defaultPipelineConfigInfo(VkRenderPass renderPass, VkPipelineLayout pipelineLayout);
 
     void Bind(VkCommandBuffer commandBuffer);
 };

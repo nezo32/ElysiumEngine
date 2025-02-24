@@ -3,7 +3,8 @@ XMAKE = xmake
 
 .PHONY: all clean build run install format lint compile-shaders debug release
 
-all: compile-shaders set-target build-engine build-app
+all: clean compile-shaders set-target build-engine build-app
+build: compile-shaders set-target build-engine build-app
 
 compile-shaders:
 	compile.bat

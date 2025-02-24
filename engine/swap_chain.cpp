@@ -3,9 +3,10 @@
 #include <algorithm>
 #include <limits>
 
-#include "queue_families.hpp"
+#include "utils/queue_families.hpp"
 
 namespace Ely {
+
 SwapChain::SwapChain(Window &window, Vulkan &vulkan, PhysDevice &physDevice, Device &device)
     : elyWindow{window}, elyVulkan{vulkan}, elyPhysDevice{physDevice}, elyDevice{device} {
     querySwapChainSupport();
@@ -13,18 +14,15 @@ SwapChain::SwapChain(Window &window, Vulkan &vulkan, PhysDevice &physDevice, Dev
     chooseSwapPresentMode();
     chooseSwapExtent();
     createSwapChain();
-
-    uint32_t imageCount;
-    vkGetSwapchainImagesKHR(device.GetDevice(), swapChain, &imageCount, nullptr);
-    swapChainImages.resize(imageCount);
-    vkGetSwapchainImagesKHR(device.GetDevice(), swapChain, &imageCount, swapChainImages.data());
+    createSwapChainImages();
+    createSwapChainImageViews();
 }
 
 SwapChain::~SwapChain() {
     auto device = elyDevice.GetDevice();
 
-    for (auto &image : swapChainImages) {
-        vkDestroyImage(device, image, nullptr);
+    for (auto imageView : swapChainImageViews) {
+        vkDestroyImageView(device, imageView, nullptr);
     }
 
     vkDestroySwapchainKHR(device, swapChain, nullptr);
@@ -52,6 +50,13 @@ SwapChainSupportDetails SwapChain::QuerySwapChainSupport(VkSurfaceKHR surface, V
     return details;
 }
 
+SwapChainNextImageResult SwapChain::NextImage(VkSemaphore semaphore, uint64_t timeout, VkFence fence) {
+    SwapChainNextImageResult ret{};
+    VkResult result = vkAcquireNextImageKHR(elyDevice.GetDevice(), swapChain, timeout, semaphore, fence, &ret.image);
+    ret.result = result;
+    return ret;
+}
+
 void SwapChain::querySwapChainSupport() {
     auto device = elyPhysDevice.GetPhysicalDevice();
     auto surface = elyVulkan.GetSurface();
@@ -75,11 +80,19 @@ void SwapChain::chooseSwapPresentMode() {
     for (const auto &availablePresentMode : details.presentModes) {
         if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
             presentMode = availablePresentMode;
+
+#ifdef _DEBUG
+            std::cout << "Present mode: Mailbox" << std::endl;
+#endif
+
             return;
         }
     }
 
     presentMode = VK_PRESENT_MODE_FIFO_KHR;
+#ifdef _DEBUG
+    std::cout << "Present mode: FIFO" << std::endl;
+#endif
 }
 
 void SwapChain::chooseSwapExtent() {
@@ -87,10 +100,7 @@ void SwapChain::chooseSwapExtent() {
         extent = details.capabilities.currentExtent;
         return;
     } else {
-        int width, height;
-        glfwGetFramebufferSize(elyWindow.GetWindow(), &width, &height);
-
-        VkExtent2D actualExtent = {static_cast<uint32_t>(width), static_cast<uint32_t>(height)};
+        VkExtent2D actualExtent = elyWindow.GetExtent();
 
         actualExtent.width = std::clamp(actualExtent.width, details.capabilities.minImageExtent.width,
                                         details.capabilities.maxImageExtent.width);
@@ -143,8 +153,39 @@ void SwapChain::createSwapChain() {
     }
 }
 
-void SwapChain::createSwapChainImages() {}
+void SwapChain::createSwapChainImages() {
+    uint32_t imageCount;
+    vkGetSwapchainImagesKHR(elyDevice.GetDevice(), swapChain, &imageCount, nullptr);
+    swapChainImages.resize(imageCount);
+    vkGetSwapchainImagesKHR(elyDevice.GetDevice(), swapChain, &imageCount, swapChainImages.data());
+    swapChainImageFormat = surfaceFormat.format;
+}
 
-void SwapChain::createSwapChainImageViews() {}
+void SwapChain::createSwapChainImageViews() {
+    swapChainImageViews.resize(swapChainImages.size());
+
+    for (size_t i = 0; i < swapChainImages.size(); i++) {
+        VkImageViewCreateInfo createInfo{};
+        createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+        createInfo.image = swapChainImages[i];
+        createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+        createInfo.format = swapChainImageFormat;
+
+        createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+        createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+        createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+        createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+
+        createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        createInfo.subresourceRange.baseMipLevel = 0;
+        createInfo.subresourceRange.levelCount = 1;
+        createInfo.subresourceRange.baseArrayLayer = 0;
+        createInfo.subresourceRange.layerCount = 1;
+
+        if (vkCreateImageView(elyDevice.GetDevice(), &createInfo, nullptr, &swapChainImageViews[i]) != VK_SUCCESS) {
+            throw std::runtime_error("failed to create image views!");
+        }
+    }
+}
 
 }   // namespace Ely

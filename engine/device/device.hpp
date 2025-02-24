@@ -4,7 +4,6 @@
 #include "phys_device.hpp"
 #include "vulkan.hpp"
 
-
 namespace Ely {
 class PhysDevice;
 class Device {
@@ -23,5 +22,7 @@ class Device {
     Device &operator=(Device &&) = delete;
 
     VkDevice GetDevice() { return device; }
+    VkQueue GetGraphicsQueue() { return graphicsQueue; }
+    VkQueue GetPresentQueue() { return presentQueue; }
 };
 }   // namespace Ely

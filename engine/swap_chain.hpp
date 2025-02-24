@@ -2,18 +2,22 @@
 
 #include <vector>
 
-#include "device.hpp"
+#include "device/device.hpp"
+#include "device/phys_device.hpp"
 #include "external/glfw.hpp"
-#include "phys_device.hpp"
 #include "vulkan.hpp"
 #include "window.hpp"
-
 
 namespace Ely {
 struct SwapChainSupportDetails {
     VkSurfaceCapabilitiesKHR capabilities;
     std::vector<VkSurfaceFormatKHR> formats;
     std::vector<VkPresentModeKHR> presentModes;
+};
+
+struct SwapChainNextImageResult {
+    uint32_t image;
+    VkResult result;
 };
 
 class PhysDevice;
@@ -31,6 +35,7 @@ class SwapChain {
     VkSurfaceFormatKHR surfaceFormat{};
     VkPresentModeKHR presentMode;
     VkExtent2D extent{};
+    VkFormat swapChainImageFormat;
     std::vector<VkImage> swapChainImages;
     std::vector<VkImageView> swapChainImageViews;
 
@@ -48,6 +53,14 @@ class SwapChain {
 
     SwapChain(const SwapChain &) = delete;
     SwapChain &operator=(const SwapChain &) = delete;
+
+    VkSwapchainKHR GetSwapChain() { return swapChain; }
+    VkFormat GetImageFormat() { return swapChainImageFormat; }
+    std::vector<VkImageView> GetImageViews() { return swapChainImageViews; }
+    VkExtent2D GetExtent() { return extent; }
+
+    SwapChainNextImageResult NextImage(VkSemaphore semaphore = nullptr, uint64_t timeout = UINT64_MAX,
+                                       VkFence fence = VK_NULL_HANDLE);
 
     static SwapChainSupportDetails QuerySwapChainSupport(VkSurfaceKHR surface, VkPhysicalDevice device);
 };

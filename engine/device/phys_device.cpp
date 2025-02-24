@@ -4,8 +4,9 @@
 #include <map>
 #include <set>
 
-#include "queue_families.hpp"
 #include "swap_chain.hpp"
+#include "utils/queue_families.hpp"
+
 
 namespace Ely {
 

@@ -11,8 +11,10 @@ class Window {
 
     int width;
     int height;
+    bool framebufferResized = false;
 
     void setHints();
+    static void framebufferResizeCallback(GLFWwindow *window, int width, int height);
 
    public:
     Window(const int width, const int height, const char *title);
@@ -23,9 +25,10 @@ class Window {
 
     GLFWwindow *GetWindow() { return window; }
 
-    uint32_t GetWidth() { return static_cast<uint32_t>(width); }
-    uint32_t GetHeight() { return static_cast<uint32_t>(height); }
-    VkExtent2D GetExtent() { return {GetWidth(), GetHeight()}; }
+    VkExtent2D GetExtent() { return {static_cast<uint32_t>(width), static_cast<uint32_t>(height)}; }
+
+    void setFramebufferResized(bool value) { framebufferResized = value; }
+    bool IsFramebufferResized() { return framebufferResized; }
 
     void CreateWindowSurface(VkInstance instance, VkSurfaceKHR *surface);
     bool ShouldClose() { return glfwWindowShouldClose(window); }

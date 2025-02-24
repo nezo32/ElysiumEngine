@@ -61,7 +61,7 @@ VkApplicationInfo Vulkan::createApplicationInfo(const char *appName, uint32_t ap
     appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
     appInfo.pApplicationName = appName;
     appInfo.applicationVersion = appVersion;
-    appInfo.pEngineName = "sium";
+    appInfo.pEngineName = "Elysium";
     appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
     appInfo.apiVersion = VK_API_VERSION_1_0;
     return appInfo;
