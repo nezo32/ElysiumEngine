@@ -4,8 +4,10 @@
 #include <iostream>
 #include <string>
 
+#include "buffer/vertex_buffer.hpp"
 #include "pipeline.hpp"
 #include "utils/debug_log.hpp"
+
 
 #ifndef SHADER_DIR
 #define SHADER_DIR "../../../../ElysiumEngine/shaders/"
@@ -18,11 +20,7 @@ Pipeline::Pipeline(Device &d, const PipelineConfigInfo &configInfo, const char *
     createPipeline(configInfo, vertexPath, fragmentPath);
 }
 
-Pipeline::~Pipeline() {
-    vkDestroyShaderModule(device.GetDevice(), vertexModule, nullptr);
-    vkDestroyShaderModule(device.GetDevice(), fragmentModule, nullptr);
-    vkDestroyPipeline(device.GetDevice(), pipeline, nullptr);
-}
+Pipeline::~Pipeline() { vkDestroyPipeline(device.GetDevice(), pipeline, nullptr); }
 
 std::vector<char> Pipeline::readFile(const char *path) {
     namespace fs = std::filesystem;
@@ -91,11 +89,13 @@ void Pipeline::createPipeline(const PipelineConfigInfo &configInfo, const char *
 
     // VERTEX INPUT
     VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
+    auto bindingDescription = Vertex::getBindingDescription();
+    auto attributeDescriptions = Vertex::getAttributeDescriptions();
     vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    vertexInputInfo.vertexAttributeDescriptionCount = 0;
-    vertexInputInfo.vertexBindingDescriptionCount = 0;
-    vertexInputInfo.pVertexAttributeDescriptions = nullptr;
-    vertexInputInfo.pVertexBindingDescriptions = nullptr;
+    vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
+    vertexInputInfo.vertexBindingDescriptionCount = 1;
+    vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
+    vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
 
     // DYNAMIC STATE
     VkPipelineDynamicStateCreateInfo dynamicState{};
@@ -135,6 +135,9 @@ void Pipeline::createPipeline(const PipelineConfigInfo &configInfo, const char *
         VK_SUCCESS) {
         throw std::runtime_error("Failed to create pipeline");
     }
+
+    vkDestroyShaderModule(device.GetDevice(), vertexModule, nullptr);
+    vkDestroyShaderModule(device.GetDevice(), fragmentModule, nullptr);
 }
 
 PipelineConfigInfo Pipeline::defaultPipelineConfigInfo(VkRenderPass renderPass, VkPipelineLayout pipelineLayout) {

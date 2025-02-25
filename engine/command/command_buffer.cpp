@@ -44,7 +44,7 @@ void CommandBuffer::Submit(VkSemaphore* waitSemaphores, VkSemaphore* signalSemap
     }
 }
 
-void CommandBuffer::Record(uint32_t imageIndex) {
+void CommandBuffer::Record(uint32_t imageIndex, VertexBuffer& buffer, std::vector<Vertex>& vertices) {
     VkCommandBufferBeginInfo beginInfo{};
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     beginInfo.flags = 0;                    // Optional
@@ -86,7 +86,11 @@ void CommandBuffer::Record(uint32_t imageIndex) {
     scissor.extent = extent;
     vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-    vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+    VkBuffer vertexBuffers[] = {buffer.GetBuffer()};
+    VkDeviceSize offsets[] = {0};
+    vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+
+    vkCmdDraw(commandBuffer, static_cast<uint32_t>(vertices.size()), 1, 0, 0);
 
     vkCmdEndRenderPass(commandBuffer);
     if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {

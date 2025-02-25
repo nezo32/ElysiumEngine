@@ -16,8 +16,8 @@ else
     set_strip("all")
 end
 
-add_requires("glfw 3.4", "vulkansdk", "glm")
-add_packages("glfw", "vulkansdk", "glm")
+add_requires("glfw 3.4", "vulkansdk", "glm", "soil2", "tinyobjloader")
+add_packages("glfw", "vulkansdk", "glm", "soil2", "tinyobjloader")
 
 target("elysium")
     set_kind("static")
@@ -40,6 +40,7 @@ target("elysium")
         os.cp("engine/pipeline/*.hpp", "ElysiumEngine/includes/elysium/pipeline/")
         os.cp("engine/utils/*.hpp", "ElysiumEngine/includes/elysium/utils/")
         os.cp("engine/device/*.hpp", "ElysiumEngine/includes/elysium/device/")
+        os.cp("engine/buffer/*.hpp", "ElysiumEngine/includes/elysium/buffer/")
     end)
 
 target("app")

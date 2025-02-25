@@ -5,12 +5,12 @@
 #include "vulkan.hpp"
 #include "window.hpp"
 
-
 namespace Ely {
 class PhysDevice {
    private:
     Vulkan &elyVulkan;
     VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+    VkPhysicalDeviceMemoryProperties memProperties;
 
     void pickPhysicalDevice();
     uint32_t rateDeviceSuitability(VkPhysicalDevice device);
@@ -25,6 +25,9 @@ class PhysDevice {
     PhysDevice(PhysDevice &&) = delete;
     PhysDevice &operator=(PhysDevice &&) = delete;
 
+    uint32_t FindMemoryType(uint32_t type, VkMemoryPropertyFlags properties);
+
+    VkPhysicalDeviceMemoryProperties GetMemoryProperties() { return memProperties; }
     VkPhysicalDevice GetPhysicalDevice() { return physicalDevice; }
 };
 }   // namespace Ely

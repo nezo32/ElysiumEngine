@@ -32,6 +32,8 @@ Renderer::Renderer(Window& window, Vulkan& vulkan, PhysDevice& physDevice, Devic
         renderFinishedSemaphores.push_back(std::make_unique<Sync::Semaphore>(device));
         inFlightFences.push_back(std::make_unique<Sync::Fence>(device));
     }
+
+    vertexBuffer.Map(vertices);
 }
 
 void Renderer::Draw() {
@@ -54,7 +56,7 @@ void Renderer::Draw() {
     uint32_t imageIndex = nextImageResult.image;
 
     commandBuffers[currentFrame]->Reset();
-    commandBuffers[currentFrame]->Record(imageIndex);
+    commandBuffers[currentFrame]->Record(imageIndex, vertexBuffer, vertices);
     commandBuffers[currentFrame]->Submit(&wait, &signal, fence);
 
     present(&signal, &imageIndex);

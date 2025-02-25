@@ -3,6 +3,7 @@
 #include <memory>
 #include <vector>
 
+#include "buffer/vertex_buffer.hpp"
 #include "command/command_buffer.hpp"
 #include "device/phys_device.hpp"
 #include "external/glfw.hpp"
@@ -25,6 +26,12 @@ class Renderer {
     std::unique_ptr<FrameBuffer>& frameBuffer;
     std::unique_ptr<SwapChain>& swapChain;
     VkCommandBuffer commandBuffer;
+
+    // TODO: implement model/vertex uploading
+    std::vector<Vertex> vertices = {{{0.0f, -0.5f, 0.f}, {1.0f, 0.0f, 0.0f}},
+                                    {{0.5f, 0.5f, 0.f}, {1.0f, 1.0f, 1.0f}},
+                                    {{-0.5f, 0.5f, 0.f}, {0.0f, 0.0f, 1.0f}}};
+    VertexBuffer vertexBuffer{physDevice, device, vertices.size()};
 
     std::vector<VkCommandBuffer> buffers;
     std::vector<std::unique_ptr<CommandBuffer>> commandBuffers;

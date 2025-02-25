@@ -7,7 +7,6 @@
 #include "swap_chain.hpp"
 #include "utils/queue_families.hpp"
 
-
 namespace Ely {
 
 PhysDevice::PhysDevice(Vulkan& vulkan) : elyVulkan{vulkan} { pickPhysicalDevice(); }
@@ -52,6 +51,8 @@ void PhysDevice::pickPhysicalDevice() {
     vkGetPhysicalDeviceProperties(physicalDevice, &properties);
     std::cout << "selected device: " << std::endl << "\t" << properties.deviceName << std::endl;
 #endif
+
+    vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
 }
 
 uint32_t PhysDevice::rateDeviceSuitability(VkPhysicalDevice device) {
@@ -99,6 +100,16 @@ bool PhysDevice::checkDeviceExtensionSupport(VkPhysicalDevice device) {
     }
 
     return requiredExtensions.empty();
+}
+
+uint32_t PhysDevice::FindMemoryType(uint32_t type, VkMemoryPropertyFlags properties) {
+    for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
+        if ((type & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
+            return i;
+        }
+    }
+
+    throw std::runtime_error("Failed to find suitable memory type");
 }
 
 }   // namespace Ely

@@ -2,10 +2,11 @@
 
 #include <memory>
 
+#include "buffer/frame_buffer.hpp"
+#include "buffer/vertex_buffer.hpp"
 #include "command_pool.hpp"
 #include "device/device.hpp"
 #include "external/glfw.hpp"
-#include "frame_buffer.hpp"
 #include "pipeline/pipeline.hpp"
 #include "render_pass.hpp"
 #include "swap_chain.hpp"
@@ -29,7 +30,7 @@ class CommandBuffer {
     void Reset(VkCommandBufferResetFlags flags = 0);
     void Submit(VkSemaphore* waitSemaphores, VkSemaphore* signalSemaphores, VkFence fence,
                 uint32_t waitSemaphoresCount = 1, uint32_t signalSemaphoresCount = 1);
-    void Record(uint32_t imageIndex);
+    void Record(uint32_t imageIndex, VertexBuffer& buffer, std::vector<Vertex>& vertices);
 
     VkCommandBuffer GetCommandBuffer() { return commandBuffer; }
 };
