@@ -2,13 +2,13 @@
 
 #include <set>
 
+#include "dependencies.hpp"
 #include "utils/queue_families.hpp"
 
 namespace Ely {
 
-Device::Device(Vulkan &elyVulkan, PhysDevice &physDevice) {
-    QueueFamilyIndices indices =
-        QueueFamilies::FindQueueFamilies(elyVulkan.GetSurface(), physDevice.GetPhysicalDevice());
+Device::Device(ElysiumDependencies &deps) {
+    auto indices = findQueueFamilies(deps.vulkan->GetSurface(), deps.physDevice->GetPhysicalDevice());
 
     std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
     std::set<uint32_t> uniqueQueueFamilies = {indices.graphicsFamily.value(), indices.presentFamily.value()};
@@ -33,11 +33,11 @@ Device::Device(Vulkan &elyVulkan, PhysDevice &physDevice) {
     createInfo.pEnabledFeatures = &deviceFeatures;
     createInfo.enabledExtensionCount = 0;
 
-    auto deviceExtensions = elyVulkan.GetExtensions();
+    auto deviceExtensions = deps.vulkan->GetExtensions();
     createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
     createInfo.ppEnabledExtensionNames = deviceExtensions.data();
 
-    if (vkCreateDevice(physDevice.GetPhysicalDevice(), &createInfo, nullptr, &device) != VK_SUCCESS) {
+    if (vkCreateDevice(deps.physDevice->GetPhysicalDevice(), &createInfo, nullptr, &device) != VK_SUCCESS) {
         throw std::runtime_error("Failed to create logical device");
     }
 

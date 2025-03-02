@@ -2,35 +2,27 @@
 
 #include <memory>
 
-#include "buffer/frame_buffer.hpp"
-#include "buffer/vertex_buffer.hpp"
-#include "command_pool.hpp"
-#include "device/device.hpp"
 #include "external/glfw.hpp"
-#include "pipeline/pipeline.hpp"
-#include "render_pass.hpp"
-#include "swap_chain.hpp"
 
 namespace Ely {
 
+struct ElysiumDependencies;
+
 class CommandBuffer {
    private:
-    RenderPass& renderPass;
-    std::unique_ptr<FrameBuffer>& frameBuffer;
-    std::unique_ptr<SwapChain>& swapChain;
-    Device& device;
     VkCommandBuffer commandBuffer;
-    Pipeline& pipeline;
+    ElysiumDependencies& deps;
 
    public:
-    CommandBuffer(Device& device, CommandPool& commandPool, std::unique_ptr<SwapChain>& swapChain,
-                  RenderPass& renderPass, std::unique_ptr<FrameBuffer>& frameBuffer, Pipeline& pipeline,
-                  VkCommandBuffer buffer = nullptr);
+    CommandBuffer(ElysiumDependencies& deps, VkCommandBuffer buffer = nullptr);
 
     void Reset(VkCommandBufferResetFlags flags = 0);
     void Submit(VkSemaphore* waitSemaphores, VkSemaphore* signalSemaphores, VkFence fence,
                 uint32_t waitSemaphoresCount = 1, uint32_t signalSemaphoresCount = 1);
-    void Record(uint32_t imageIndex, VertexBuffer& buffer, std::vector<Vertex>& vertices);
+    void BeginRecord();
+    void BeginRenderPass(uint32_t imageIndex);
+    void EndRecord();
+    void EndRenderPass();
 
     VkCommandBuffer GetCommandBuffer() { return commandBuffer; }
 };

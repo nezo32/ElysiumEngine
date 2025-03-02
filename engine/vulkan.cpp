@@ -4,14 +4,18 @@
 #include <iostream>
 #include <unordered_set>
 
+#include "dependencies.hpp"
+
 namespace Ely {
 
-Vulkan::Vulkan(Window &elyWindow, const char *appName, uint32_t appVersion) {
+Vulkan::Vulkan(ElysiumCreateInfo &createInfo, ElysiumDependencies &deps) {
     auto debugInfo = createDebugMessengerInfo();
-
-    createVulkanInstance(appName, appVersion, &debugInfo);
+    createVulkanInstance(createInfo.application_name,
+                         VK_MAKE_VERSION(createInfo.application_version.major, createInfo.application_version.minor,
+                                         createInfo.application_version.patch),
+                         &debugInfo);
     createDebugUtilsMessenger(&debugInfo);
-    elyWindow.CreateWindowSurface(instance, &surface);
+    createWindowSurface(deps.window->GetWindow());
 }
 
 Vulkan::~Vulkan() {
@@ -23,13 +27,13 @@ Vulkan::~Vulkan() {
 }
 
 // VULKAN INSTANCE
-void Vulkan::createVulkanInstance(const char *appName, uint32_t appVersion,
+void Vulkan::createVulkanInstance(const char *application_name, uint32_t application_version,
                                   VkDebugUtilsMessengerCreateInfoEXT *debugInfo) {
     if (enableValidationLayers && !checkValidationLayerSupport()) {
         throw std::runtime_error("Validation layers requested, but not available");
     }
 
-    auto appInfo = createApplicationInfo(appName, appVersion);
+    auto appInfo = createApplicationInfo(application_name, application_version);
     VkInstanceCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     createInfo.pApplicationInfo = &appInfo;
@@ -56,11 +60,11 @@ void Vulkan::createVulkanInstance(const char *appName, uint32_t appVersion,
 #endif
 }
 
-VkApplicationInfo Vulkan::createApplicationInfo(const char *appName, uint32_t appVersion) {
+VkApplicationInfo Vulkan::createApplicationInfo(const char *application_name, uint32_t application_version) {
     VkApplicationInfo appInfo{};
     appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-    appInfo.pApplicationName = appName;
-    appInfo.applicationVersion = appVersion;
+    appInfo.pApplicationName = application_name;
+    appInfo.applicationVersion = application_version;
     appInfo.pEngineName = "Elysium";
     appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
     appInfo.apiVersion = VK_API_VERSION_1_0;
@@ -176,20 +180,28 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityF
                                                     VkDebugUtilsMessageTypeFlagsEXT messageType,
                                                     const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
                                                     void *pUserData) {
-    if (messageSeverity < VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
+    if (messageType < VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
         return VK_FALSE;
+    }
 
     if (messageType == VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT) {
-        std::cerr << "Validation callback: General error: " << pCallbackData->pMessage << std::endl;
+        std::cerr << "Validation callback: General: " << pCallbackData->pMessage << std::endl;
     }
     if (messageType == VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT) {
-        std::cerr << "Validation callback: Validation error: " << pCallbackData->pMessage << std::endl;
+        std::cerr << "Validation callback: Validation: " << pCallbackData->pMessage << std::endl;
     }
     if (messageType == VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT) {
-        std::cerr << "Validation callback: Performance error: " << pCallbackData->pMessage << std::endl;
+        std::cerr << "Validation callback: Performance: " << pCallbackData->pMessage << std::endl;
     }
 
     return VK_FALSE;
+}
+
+// WINDOW SURFACE
+void Vulkan::createWindowSurface(GLFWwindow *window) {
+    if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS) {
+        throw std::runtime_error("Failed to create window surface");
+    }
 }
 
 }   // namespace Ely

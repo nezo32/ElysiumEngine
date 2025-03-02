@@ -1,10 +1,10 @@
 #pragma once
 
 #include "external/glfw.hpp"
-#include "phys_device.hpp"
-#include "vulkan.hpp"
 
 namespace Ely {
+
+struct ElysiumDependencies;
 class PhysDevice;
 class Device {
    private:
@@ -13,7 +13,7 @@ class Device {
     VkQueue presentQueue;
 
    public:
-    Device(Vulkan &Vulkan, PhysDevice &physDevice);
+    Device(ElysiumDependencies &deps);
     ~Device();
 
     Device(const Device &) = delete;

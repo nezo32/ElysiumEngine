@@ -3,12 +3,13 @@
 #include <algorithm>
 #include <limits>
 
+#include "dependencies.hpp"
 #include "utils/queue_families.hpp"
+
 
 namespace Ely {
 
-SwapChain::SwapChain(Window &window, Vulkan &vulkan, PhysDevice &physDevice, Device &device)
-    : elyWindow{window}, elyVulkan{vulkan}, elyPhysDevice{physDevice}, elyDevice{device} {
+SwapChain::SwapChain(ElysiumDependencies &deps) : deps{deps} {
     querySwapChainSupport();
     chooseSwapSurfaceFormat();
     chooseSwapPresentMode();
@@ -19,7 +20,7 @@ SwapChain::SwapChain(Window &window, Vulkan &vulkan, PhysDevice &physDevice, Dev
 }
 
 SwapChain::~SwapChain() {
-    auto device = elyDevice.GetDevice();
+    auto device = deps.device->GetDevice();
 
     for (auto imageView : swapChainImageViews) {
         vkDestroyImageView(device, imageView, nullptr);
@@ -52,14 +53,14 @@ SwapChainSupportDetails SwapChain::QuerySwapChainSupport(VkSurfaceKHR surface, V
 
 SwapChainNextImageResult SwapChain::NextImage(VkSemaphore semaphore, uint64_t timeout, VkFence fence) {
     SwapChainNextImageResult ret{};
-    VkResult result = vkAcquireNextImageKHR(elyDevice.GetDevice(), swapChain, timeout, semaphore, fence, &ret.image);
+    VkResult result = vkAcquireNextImageKHR(deps.device->GetDevice(), swapChain, timeout, semaphore, fence, &ret.image);
     ret.result = result;
     return ret;
 }
 
 void SwapChain::querySwapChainSupport() {
-    auto device = elyPhysDevice.GetPhysicalDevice();
-    auto surface = elyVulkan.GetSurface();
+    auto device = deps.physDevice->GetPhysicalDevice();
+    auto surface = deps.vulkan->GetSurface();
 
     details = QuerySwapChainSupport(surface, device);
 }
@@ -100,7 +101,7 @@ void SwapChain::chooseSwapExtent() {
         extent = details.capabilities.currentExtent;
         return;
     } else {
-        VkExtent2D actualExtent = elyWindow.GetExtent();
+        VkExtent2D actualExtent = deps.window->GetExtent();
 
         actualExtent.width = std::clamp(actualExtent.width, details.capabilities.minImageExtent.width,
                                         details.capabilities.maxImageExtent.width);
@@ -120,7 +121,7 @@ void SwapChain::createSwapChain() {
 
     VkSwapchainCreateInfoKHR createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-    createInfo.surface = elyVulkan.GetSurface();
+    createInfo.surface = deps.vulkan->GetSurface();
     createInfo.minImageCount = imageCount;
     createInfo.imageFormat = surfaceFormat.format;
     createInfo.imageColorSpace = surfaceFormat.colorSpace;
@@ -128,8 +129,7 @@ void SwapChain::createSwapChain() {
     createInfo.imageArrayLayers = 1;
     createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
-    QueueFamilyIndices indices =
-        QueueFamilies::FindQueueFamilies(elyVulkan.GetSurface(), elyPhysDevice.GetPhysicalDevice());
+    auto indices = findQueueFamilies(deps.vulkan->GetSurface(), deps.physDevice->GetPhysicalDevice());
     uint32_t queueFamilyIndices[] = {indices.graphicsFamily.value(), indices.presentFamily.value()};
 
     if (indices.graphicsFamily != indices.presentFamily) {
@@ -148,16 +148,16 @@ void SwapChain::createSwapChain() {
     createInfo.clipped = VK_TRUE;
     createInfo.oldSwapchain = VK_NULL_HANDLE;
 
-    if (vkCreateSwapchainKHR(elyDevice.GetDevice(), &createInfo, nullptr, &swapChain) != VK_SUCCESS) {
+    if (vkCreateSwapchainKHR(deps.device->GetDevice(), &createInfo, nullptr, &swapChain) != VK_SUCCESS) {
         throw std::runtime_error("Failed to create swap chain");
     }
 }
 
 void SwapChain::createSwapChainImages() {
     uint32_t imageCount;
-    vkGetSwapchainImagesKHR(elyDevice.GetDevice(), swapChain, &imageCount, nullptr);
+    vkGetSwapchainImagesKHR(deps.device->GetDevice(), swapChain, &imageCount, nullptr);
     swapChainImages.resize(imageCount);
-    vkGetSwapchainImagesKHR(elyDevice.GetDevice(), swapChain, &imageCount, swapChainImages.data());
+    vkGetSwapchainImagesKHR(deps.device->GetDevice(), swapChain, &imageCount, swapChainImages.data());
     swapChainImageFormat = surfaceFormat.format;
 }
 
@@ -182,7 +182,7 @@ void SwapChain::createSwapChainImageViews() {
         createInfo.subresourceRange.baseArrayLayer = 0;
         createInfo.subresourceRange.layerCount = 1;
 
-        if (vkCreateImageView(elyDevice.GetDevice(), &createInfo, nullptr, &swapChainImageViews[i]) != VK_SUCCESS) {
+        if (vkCreateImageView(deps.device->GetDevice(), &createInfo, nullptr, &swapChainImageViews[i]) != VK_SUCCESS) {
             throw std::runtime_error("failed to create image views!");
         }
     }

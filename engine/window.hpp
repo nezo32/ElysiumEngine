@@ -4,7 +4,11 @@
 
 #include "external/glfw.hpp"
 
+
 namespace Ely {
+
+struct ElysiumCreateInfo;
+
 class Window {
    private:
     GLFWwindow *window;
@@ -17,7 +21,7 @@ class Window {
     static void framebufferResizeCallback(GLFWwindow *window, int width, int height);
 
    public:
-    Window(const int width, const int height, const char *title);
+    Window(ElysiumCreateInfo &createInfo);
     ~Window();
 
     Window(const Window &) = delete;
@@ -27,10 +31,9 @@ class Window {
 
     VkExtent2D GetExtent() { return {static_cast<uint32_t>(width), static_cast<uint32_t>(height)}; }
 
-    void setFramebufferResized(bool value) { framebufferResized = value; }
+    void SetFramebufferResized(bool value) { framebufferResized = value; }
     bool IsFramebufferResized() { return framebufferResized; }
 
-    void CreateWindowSurface(VkInstance instance, VkSurfaceKHR *surface);
     bool ShouldClose() { return glfwWindowShouldClose(window); }
     void Close() { return glfwSetWindowShouldClose(window, true); }
 };

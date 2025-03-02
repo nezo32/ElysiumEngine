@@ -1,5 +1,7 @@
 #include "sync.hpp"
 
+#include <stdexcept>
+
 namespace Ely::Sync {
 
 Semaphore::Semaphore(Device& d) : device{d} {

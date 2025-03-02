@@ -2,10 +2,12 @@
 
 #include <vector>
 
-#include "device/device.hpp"
 #include "external/glfw.hpp"
+#include "shader.hpp"
+
 
 namespace Ely {
+struct ElysiumDependencies;
 
 struct PipelineConfigInfo {
     VkPipelineInputAssemblyStateCreateInfo assemblyInfo;
@@ -14,34 +16,24 @@ struct PipelineConfigInfo {
     VkPipelineColorBlendAttachmentState blendAttachment;
     VkPipelineColorBlendStateCreateInfo blendInfo;
     VkPipelineDepthStencilStateCreateInfo depthStencilInfo;
-    VkPipelineLayout pipelineLayout = nullptr;
-    VkRenderPass renderPass = nullptr;
     uint32_t subpass = 0;
 };
 
 class Pipeline {
    private:
-    static std::vector<char> readFile(const char *path);
-    void createPipeline(const PipelineConfigInfo &configInfo, const char *vertexPath, const char *fragmentPath);
-
-    void createShaderModule(const std::vector<char> &shader, VkShaderModule *module);
-
-    Device &device;
+    ElysiumDependencies &deps;
     VkPipeline pipeline;
-    VkShaderModule vertexModule;
-    VkShaderModule fragmentModule;
-
-    static inline std::vector<VkDynamicState> dynamicStates = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
 
    public:
-    Pipeline(Device &device, const PipelineConfigInfo &configInfo, const char *vertexPath, const char *fragmentPath);
+    Pipeline(ElysiumDependencies &deps, ShaderModule *vertexShader, ShaderModule *fragmentShader,
+             const PipelineConfigInfo &configInfo);
 
     ~Pipeline();
 
     Pipeline(const Pipeline &) = delete;
     Pipeline &operator=(const Pipeline &) = delete;
 
-    static PipelineConfigInfo defaultPipelineConfigInfo(VkRenderPass renderPass, VkPipelineLayout pipelineLayout);
+    static PipelineConfigInfo defaultPipelineConfigInfo();
 
     void Bind(VkCommandBuffer commandBuffer);
 };

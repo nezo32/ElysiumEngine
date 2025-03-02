@@ -1,40 +1,23 @@
 #include "renderer.hpp"
 
-#include "events.hpp"
+#include "dependencies.hpp"
 
 namespace Ely {
 
-Renderer::Renderer(Window& window, Vulkan& vulkan, PhysDevice& physDevice, Device& device, CommandPool& commandPool,
-                   std::unique_ptr<SwapChain>& swapChain, RenderPass& renderPass,
-                   std::unique_ptr<FrameBuffer>& frameBuffer, Pipeline& pipeline)
-    : vulkan{vulkan},
-      physDevice{physDevice},
-      window{window},
-      device{device},
-      swapChain{swapChain},
-      renderPass{renderPass},
-      frameBuffer{frameBuffer} {
-    buffers.resize(MAX_FRAMES_IN_FLIGHT);
-    VkCommandBufferAllocateInfo allocInfo{};
-    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    allocInfo.commandPool = commandPool.GetCommandPool();
-    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    allocInfo.commandBufferCount = static_cast<uint32_t>(buffers.size());
-
-    if (vkAllocateCommandBuffers(device.GetDevice(), &allocInfo, buffers.data()) != VK_SUCCESS) {
-        throw std::runtime_error("Failed to allocate command buffers");
+Renderer::Renderer(ElysiumDependencies& deps) : deps{deps} {
+    for (size_t i = 0; i < deps.consts.MAX_FRAMES_IN_FLIGHT; i++) {
+        commandBuffers.push_back(std::make_unique<CommandBuffer>(deps));
+        imageAvailableSemaphores.push_back(std::make_unique<Sync::Semaphore>(*deps.device));
+        renderFinishedSemaphores.push_back(std::make_unique<Sync::Semaphore>(*deps.device));
+        inFlightFences.push_back(std::make_unique<Sync::Fence>(*deps.device));
     }
-
-    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-        commandBuffers.push_back(std::make_unique<CommandBuffer>(device, commandPool, swapChain, renderPass,
-                                                                 frameBuffer, pipeline, buffers[i]));
-        imageAvailableSemaphores.push_back(std::make_unique<Sync::Semaphore>(device));
-        renderFinishedSemaphores.push_back(std::make_unique<Sync::Semaphore>(device));
-        inFlightFences.push_back(std::make_unique<Sync::Fence>(device));
-    }
-
-    vertexBuffer.Map(vertices);
 }
+
+void Renderer::PollEvents() { glfwPollEvents(); }
+
+void Renderer::WaitEvents() { glfwWaitEvents(); }
+
+void Renderer::WaitIdle() { vkDeviceWaitIdle(deps.device->GetDevice()); }
 
 void Renderer::Draw() {
     inFlightFences[currentFrame]->Wait();
@@ -43,7 +26,7 @@ void Renderer::Draw() {
     auto signal = renderFinishedSemaphores[currentFrame]->GetSemaphore();
     auto fence = inFlightFences[currentFrame]->GetFence();
 
-    auto nextImageResult = swapChain->NextImage(wait);
+    auto nextImageResult = deps.swapChain->NextImage(wait);
     VkResult result = nextImageResult.result;
     if (result == VK_ERROR_OUT_OF_DATE_KHR) {
         recreate();
@@ -51,34 +34,66 @@ void Renderer::Draw() {
         throw std::runtime_error("Failed to acquire swap chain image");
     }
 
+    /* updateUniform(currentFrame); */
+
     inFlightFences[currentFrame]->Reset();
 
     uint32_t imageIndex = nextImageResult.image;
 
-    commandBuffers[currentFrame]->Reset();
-    commandBuffers[currentFrame]->Record(imageIndex, vertexBuffer, vertices);
-    commandBuffers[currentFrame]->Submit(&wait, &signal, fence);
+    auto commandBuffer = commandBuffers[currentFrame].get();
+
+    commandBuffer->Reset();
+    commandBuffer->BeginRecord();
+    commandBuffer->BeginRenderPass(imageIndex);
+
+    deps.pipelines[PipelineCore]->Bind(commandBuffer->GetCommandBuffer());
+
+    auto buff = commandBuffer->GetCommandBuffer();
+    for (auto& mesh : deps.meshes) {
+        VkBuffer vertexBuffers[] = {mesh->vertexBuffer->GetVertexBuffer()};
+        VkDeviceSize offsets[] = {0};
+        vkCmdBindVertexBuffers(buff, 0, 1, vertexBuffers, offsets);
+
+        vkCmdBindIndexBuffer(buff, mesh->indexBuffer->GetIndexBuffer(), 0, VK_INDEX_TYPE_UINT32);
+
+        /* vkCmdBindDescriptorSets(buff, VK_PIPELINE_BIND_POINT_GRAPHICS, deps.pipelineLayout->GetPipelineLayout(), 0,
+           1, &deps.descriptorSets->GetDescriptorSets()[currentFrame], 0, nullptr); */
+
+        vkCmdDrawIndexed(buff, static_cast<uint32_t>(mesh->indexBuffer->GetIndicesCount()), 1, 0, 0, 0);
+    }
+
+    commandBuffer->EndRenderPass();
+    commandBuffer->EndRecord();
+    commandBuffer->Submit(&wait, &signal, fence);
 
     present(&signal, &imageIndex);
 
-    currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+    currentFrame = (currentFrame + 1) % deps.consts.MAX_FRAMES_IN_FLIGHT;
 }
 
-// TODO: rethink swapchain recreation.
-// Maybe some class method to recreate instance in stack rather than recreate by pointer
+void Renderer::updateUniform(size_t frameIndex) {
+    SpaceTransformObject sto{};
+    sto.model = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    sto.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    sto.projection = glm::perspective(glm::radians(45.0f), deps.swapChain->GetExtentRatio(), 0.1f, 10.0f);
+    sto.projection[1][1] *= -1;
+
+    deps.uniformBuffers->Update(frameIndex, &sto);
+}
+
 void Renderer::recreate() {
-    auto extent = window.GetExtent();
+    auto extent = deps.window->GetExtent();
     while (extent.width == 0 || extent.height == 0) {
-        extent = window.GetExtent();
-        Events::WaitEvents();
+        extent = deps.window->GetExtent();
+        WaitEvents();
     }
 
-    Events::WaitIdle(device);
-    frameBuffer.reset();
-    swapChain.reset();
+    WaitIdle();
+    delete deps.frameBuffers;
+    delete deps.swapChain;
 
-    swapChain.reset(new SwapChain(window, vulkan, physDevice, device));
-    frameBuffer.reset(new FrameBuffer(device, swapChain, renderPass));
+    deps.swapChain = new SwapChain(deps);
+    deps.frameBuffers = new FrameBuffers(deps);
 }
 
 void Renderer::present(VkSemaphore* signal, uint32_t* imageIndices) {
@@ -88,15 +103,15 @@ void Renderer::present(VkSemaphore* signal, uint32_t* imageIndices) {
     presentInfo.waitSemaphoreCount = 1;
     presentInfo.pWaitSemaphores = signal;
 
-    VkSwapchainKHR swapChains[] = {swapChain->GetSwapChain()};
+    VkSwapchainKHR swapChains[] = {deps.swapChain->GetSwapChain()};
     presentInfo.swapchainCount = 1;
     presentInfo.pSwapchains = swapChains;
 
     presentInfo.pImageIndices = imageIndices;
 
-    VkResult result = vkQueuePresentKHR(device.GetPresentQueue(), &presentInfo);
-    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || window.IsFramebufferResized()) {
-        window.setFramebufferResized(false);
+    VkResult result = vkQueuePresentKHR(deps.device->GetPresentQueue(), &presentInfo);
+    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || deps.window->IsFramebufferResized()) {
+        deps.window->SetFramebufferResized(false);
         recreate();
     } else if (result != VK_SUCCESS) {
         throw std::runtime_error("Failed to present swap chain image");

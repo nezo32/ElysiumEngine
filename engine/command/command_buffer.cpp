@@ -1,22 +1,21 @@
 #include "command_buffer.hpp"
 
+#include "dependencies.hpp"
+
 namespace Ely {
 
-CommandBuffer::CommandBuffer(Device& device, CommandPool& commandPool, std::unique_ptr<SwapChain>& swapChain,
-                             RenderPass& renderPass, std::unique_ptr<FrameBuffer>& frameBuffer, Pipeline& pipeline,
-                             VkCommandBuffer buffer)
-    : device{device}, swapChain{swapChain}, renderPass{renderPass}, frameBuffer{frameBuffer}, pipeline{pipeline} {
+CommandBuffer::CommandBuffer(ElysiumDependencies& deps, VkCommandBuffer buffer) : deps{deps} {
     if (buffer) {
         commandBuffer = buffer;
         return;
     }
     VkCommandBufferAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    allocInfo.commandPool = commandPool.GetCommandPool();
+    allocInfo.commandPool = deps.commandPools[CommandPoolCore]->GetCommandPool();
     allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     allocInfo.commandBufferCount = 1;
 
-    if (vkAllocateCommandBuffers(device.GetDevice(), &allocInfo, &commandBuffer) != VK_SUCCESS) {
+    if (vkAllocateCommandBuffers(deps.device->GetDevice(), &allocInfo, &commandBuffer) != VK_SUCCESS) {
         throw std::runtime_error("failed to allocate command buffers!");
     }
 }
@@ -39,12 +38,12 @@ void CommandBuffer::Submit(VkSemaphore* waitSemaphores, VkSemaphore* signalSemap
     submitInfo.signalSemaphoreCount = signalSemaphoresCount;
     submitInfo.pSignalSemaphores = signalSemaphores;
 
-    if (vkQueueSubmit(device.GetGraphicsQueue(), 1, &submitInfo, fence) != VK_SUCCESS) {
+    if (vkQueueSubmit(deps.device->GetGraphicsQueue(), 1, &submitInfo, fence) != VK_SUCCESS) {
         throw std::runtime_error("Failed to submit draw command buffer");
     }
 }
 
-void CommandBuffer::Record(uint32_t imageIndex, VertexBuffer& buffer, std::vector<Vertex>& vertices) {
+void CommandBuffer::BeginRecord() {
     VkCommandBufferBeginInfo beginInfo{};
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     beginInfo.flags = 0;                    // Optional
@@ -53,13 +52,15 @@ void CommandBuffer::Record(uint32_t imageIndex, VertexBuffer& buffer, std::vecto
     if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS) {
         throw std::runtime_error("Failed to begin recording command buffer!");
     }
+}
 
-    auto extent = swapChain->GetExtent();
+void CommandBuffer::BeginRenderPass(uint32_t imageIndex) {
+    auto extent = deps.swapChain->GetExtent();
 
     VkRenderPassBeginInfo renderPassInfo{};
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    renderPassInfo.renderPass = renderPass.GetRenderPass();
-    renderPassInfo.framebuffer = frameBuffer->GetFrameBuffers()[imageIndex];
+    renderPassInfo.renderPass = deps.renderPass->GetRenderPass();
+    renderPassInfo.framebuffer = deps.frameBuffers->GetFrameBuffers()[imageIndex];
 
     renderPassInfo.renderArea.offset = {0, 0};
     renderPassInfo.renderArea.extent = extent;
@@ -70,8 +71,6 @@ void CommandBuffer::Record(uint32_t imageIndex, VertexBuffer& buffer, std::vecto
 
     vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-    pipeline.Bind(commandBuffer);
-
     VkViewport viewport{};
     viewport.x = 0.0f;
     viewport.y = 0.0f;
@@ -79,20 +78,16 @@ void CommandBuffer::Record(uint32_t imageIndex, VertexBuffer& buffer, std::vecto
     viewport.height = static_cast<float>(extent.height);
     viewport.minDepth = 0.0f;
     viewport.maxDepth = 1.0f;
-    vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
-
     VkRect2D scissor{};
     scissor.offset = {0, 0};
     scissor.extent = extent;
     vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+    vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+}
 
-    VkBuffer vertexBuffers[] = {buffer.GetBuffer()};
-    VkDeviceSize offsets[] = {0};
-    vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+void CommandBuffer::EndRenderPass() { vkCmdEndRenderPass(commandBuffer); }
 
-    vkCmdDraw(commandBuffer, static_cast<uint32_t>(vertices.size()), 1, 0, 0);
-
-    vkCmdEndRenderPass(commandBuffer);
+void CommandBuffer::EndRecord() {
     if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
         throw std::runtime_error("Failed to record command buffer");
     }

@@ -1,14 +1,14 @@
 #pragma once
 
 #include "external/glfw.hpp"
-#include "swap_chain.hpp"
-#include "vulkan.hpp"
-#include "window.hpp"
 
 namespace Ely {
+
+struct ElysiumDependencies;
+
 class PhysDevice {
    private:
-    Vulkan &elyVulkan;
+    ElysiumDependencies &deps;
     VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
     VkPhysicalDeviceMemoryProperties memProperties;
 
@@ -17,8 +17,7 @@ class PhysDevice {
     bool checkDeviceExtensionSupport(VkPhysicalDevice device);
 
    public:
-    PhysDevice(Vulkan &vulkan);
-    ~PhysDevice();
+    PhysDevice(ElysiumDependencies &deps);
 
     PhysDevice(const PhysDevice &) = delete;
     PhysDevice &operator=(const PhysDevice &) = delete;
@@ -27,7 +26,7 @@ class PhysDevice {
 
     uint32_t FindMemoryType(uint32_t type, VkMemoryPropertyFlags properties);
 
-    VkPhysicalDeviceMemoryProperties GetMemoryProperties() { return memProperties; }
+    VkPhysicalDeviceMemoryProperties &GetMemoryProperties() { return memProperties; }
     VkPhysicalDevice GetPhysicalDevice() { return physicalDevice; }
 };
 }   // namespace Ely

@@ -1,16 +1,18 @@
 #pragma once
 
-#include "device/device.hpp"
 #include "external/glfw.hpp"
 
 namespace Ely {
+
+struct ElysiumDependencies;
+
 class PipelineLayout {
    private:
-    Device& device;
+    ElysiumDependencies &deps;
     VkPipelineLayout pipelineLayout;
 
    public:
-    PipelineLayout(Device& d);
+    PipelineLayout(ElysiumDependencies &deps);
     ~PipelineLayout();
 
     VkPipelineLayout GetPipelineLayout() { return pipelineLayout; }

@@ -2,11 +2,7 @@
 
 #include <vector>
 
-#include "device/device.hpp"
-#include "device/phys_device.hpp"
 #include "external/glfw.hpp"
-#include "vulkan.hpp"
-#include "window.hpp"
 
 namespace Ely {
 struct SwapChainSupportDetails {
@@ -20,16 +16,14 @@ struct SwapChainNextImageResult {
     VkResult result;
 };
 
+struct ElysiumDependencies;
 class PhysDevice;
 class Device;
 class SwapChain {
    private:
-    VkSwapchainKHR swapChain;
+    ElysiumDependencies &deps;
 
-    Window &elyWindow;
-    Vulkan &elyVulkan;
-    PhysDevice &elyPhysDevice;
-    Device &elyDevice;
+    VkSwapchainKHR swapChain;
 
     SwapChainSupportDetails details;
     VkSurfaceFormatKHR surfaceFormat{};
@@ -48,7 +42,7 @@ class SwapChain {
     void createSwapChainImageViews();
 
    public:
-    SwapChain(Window &window, Vulkan &vulkan, PhysDevice &physDevice, Device &device);
+    SwapChain(ElysiumDependencies &deps);
     ~SwapChain();
 
     SwapChain(const SwapChain &) = delete;
@@ -56,8 +50,9 @@ class SwapChain {
 
     VkSwapchainKHR GetSwapChain() { return swapChain; }
     VkFormat GetImageFormat() { return swapChainImageFormat; }
-    std::vector<VkImageView> GetImageViews() { return swapChainImageViews; }
+    std::vector<VkImageView> &GetImageViews() { return swapChainImageViews; }
     VkExtent2D GetExtent() { return extent; }
+    float GetExtentRatio() { return extent.width / (float) extent.height; }
 
     SwapChainNextImageResult NextImage(VkSemaphore semaphore = nullptr, uint64_t timeout = UINT64_MAX,
                                        VkFence fence = VK_NULL_HANDLE);

@@ -6,8 +6,9 @@
 #include "external/glfw.hpp"
 #include "window.hpp"
 
-
 namespace Ely {
+struct ElysiumDependencies;
+
 static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
                                                     VkDebugUtilsMessageTypeFlagsEXT messageType,
                                                     const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
@@ -33,16 +34,18 @@ class Vulkan {
 
     bool checkValidationLayerSupport();
 
-    void createVulkanInstance(const char *appName, uint32_t appVersion, VkDebugUtilsMessengerCreateInfoEXT *debugInfo);
-    VkApplicationInfo createApplicationInfo(const char *appName, uint32_t appVersion);
+    void createVulkanInstance(const char *application_name, uint32_t application_version,
+                              VkDebugUtilsMessengerCreateInfoEXT *debugInfo);
+    VkApplicationInfo createApplicationInfo(const char *application_name, uint32_t application_version);
     VkDebugUtilsMessengerCreateInfoEXT createDebugMessengerInfo();
     void createDebugUtilsMessenger(VkDebugUtilsMessengerCreateInfoEXT *createInfo);
+    void createWindowSurface(GLFWwindow *window);
 
     std::vector<const char *> getRequiredInstanceExtensions();
     void debugExtensions();
 
    public:
-    Vulkan(Window &elyWindow, const char *appName, uint32_t appVersion);
+    Vulkan(ElysiumCreateInfo &createInfo, ElysiumDependencies &deps);
     ~Vulkan();
 
     Vulkan(const Vulkan &) = delete;
@@ -52,6 +55,6 @@ class Vulkan {
 
     VkInstance GetInstance() { return instance; }
     VkSurfaceKHR GetSurface() { return surface; }
-    const std::vector<const char *> GetExtensions() { return deviceExtensions; }
+    const std::vector<const char *> &GetExtensions() { return deviceExtensions; }
 };
 }   // namespace Ely

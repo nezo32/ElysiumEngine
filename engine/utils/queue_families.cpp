@@ -4,7 +4,7 @@
 
 namespace Ely {
 
-QueueFamilyIndices QueueFamilies::FindQueueFamilies(VkSurfaceKHR surface, VkPhysicalDevice device) {
+QueueFamilyIndices findQueueFamilies(VkSurfaceKHR surface, VkPhysicalDevice device) {
     QueueFamilyIndices indices;
 
     uint32_t queueFamilyCount = 0;

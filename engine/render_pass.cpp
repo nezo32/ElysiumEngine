@@ -1,9 +1,11 @@
 #include "render_pass.hpp"
 
+#include "dependencies.hpp"
+
 namespace Ely {
-RenderPass::RenderPass(Device &d, std::unique_ptr<SwapChain> &swapChain) : device{d} {
+RenderPass::RenderPass(ElysiumDependencies &deps) : deps{deps} {
     VkAttachmentDescription colorAttachment{};
-    colorAttachment.format = swapChain->GetImageFormat();
+    colorAttachment.format = deps.swapChain->GetImageFormat();
     colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
 
     colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
@@ -42,10 +44,10 @@ RenderPass::RenderPass(Device &d, std::unique_ptr<SwapChain> &swapChain) : devic
     renderPassInfo.dependencyCount = 1;
     renderPassInfo.pDependencies = &dependency;
 
-    if (vkCreateRenderPass(device.GetDevice(), &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS) {
+    if (vkCreateRenderPass(deps.device->GetDevice(), &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS) {
         throw std::runtime_error("Failed to create render pass");
     }
 }
 
-RenderPass::~RenderPass() { vkDestroyRenderPass(device.GetDevice(), renderPass, nullptr); }
+RenderPass::~RenderPass() { vkDestroyRenderPass(deps.device->GetDevice(), renderPass, nullptr); }
 }   // namespace Ely

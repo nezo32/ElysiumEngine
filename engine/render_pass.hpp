@@ -7,14 +7,15 @@
 #include "swap_chain.hpp"
 
 namespace Ely {
+
+struct ElysiumDependencies;
 class RenderPass {
    private:
+    ElysiumDependencies &deps;
     VkRenderPass renderPass;
 
-    Device &device;
-
    public:
-    RenderPass(Device &d, std::unique_ptr<SwapChain> &swapChain);
+    RenderPass(ElysiumDependencies &deps);
     ~RenderPass();
 
     VkRenderPass GetRenderPass() { return renderPass; }

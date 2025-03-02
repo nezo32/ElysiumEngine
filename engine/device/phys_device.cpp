@@ -4,24 +4,23 @@
 #include <map>
 #include <set>
 
+#include "dependencies.hpp"
 #include "swap_chain.hpp"
 #include "utils/queue_families.hpp"
 
 namespace Ely {
 
-PhysDevice::PhysDevice(Vulkan& vulkan) : elyVulkan{vulkan} { pickPhysicalDevice(); }
-
-PhysDevice::~PhysDevice() {}
+PhysDevice::PhysDevice(ElysiumDependencies& deps) : deps{deps} { pickPhysicalDevice(); }
 
 void PhysDevice::pickPhysicalDevice() {
     uint32_t deviceCount = 0;
-    vkEnumeratePhysicalDevices(elyVulkan.GetInstance(), &deviceCount, nullptr);
+    vkEnumeratePhysicalDevices(deps.vulkan->GetInstance(), &deviceCount, nullptr);
     if (deviceCount == 0) {
         throw std::runtime_error("Failed to find GPUs with Vulkan support");
     }
 
     std::vector<VkPhysicalDevice> devices(deviceCount);
-    vkEnumeratePhysicalDevices(elyVulkan.GetInstance(), &deviceCount, devices.data());
+    vkEnumeratePhysicalDevices(deps.vulkan->GetInstance(), &deviceCount, devices.data());
 
     std::multimap<uint32_t, VkPhysicalDevice> candidates;
     for (const auto& device : devices) {
@@ -62,11 +61,11 @@ uint32_t PhysDevice::rateDeviceSuitability(VkPhysicalDevice device) {
     vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
 
     bool extensionsSupported = checkDeviceExtensionSupport(device);
-    bool queueFamiliesSupported = QueueFamilies::FindQueueFamilies(elyVulkan.GetSurface(), device).isComplete();
+    bool queueFamiliesSupported = findQueueFamilies(deps.vulkan->GetSurface(), device).isComplete();
     bool swapChainAdequate = false;
 
     if (extensionsSupported) {
-        auto swapChainSupport = Ely::SwapChain::QuerySwapChainSupport(elyVulkan.GetSurface(), device);
+        auto swapChainSupport = Ely::SwapChain::QuerySwapChainSupport(deps.vulkan->GetSurface(), device);
         swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
     }
 
@@ -92,7 +91,7 @@ bool PhysDevice::checkDeviceExtensionSupport(VkPhysicalDevice device) {
     std::vector<VkExtensionProperties> availableExtensions(extensionCount);
     vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data());
 
-    auto deviceExtensions = elyVulkan.GetExtensions();
+    auto deviceExtensions = deps.vulkan->GetExtensions();
     std::set<std::string> requiredExtensions(deviceExtensions.begin(), deviceExtensions.end());
 
     for (const auto& extension : availableExtensions) {

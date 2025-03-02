@@ -1,79 +1,20 @@
 #include <cassert>
-#include <filesystem>
-#include <fstream>
 #include <iostream>
 #include <string>
 
-#include "buffer/vertex_buffer.hpp"
+#include "dependencies.hpp"
 #include "pipeline.hpp"
-#include "utils/debug_log.hpp"
-
-
-#ifndef SHADER_DIR
-#define SHADER_DIR "../../../../ElysiumEngine/shaders/"
-#endif
 
 namespace Ely {
 
-Pipeline::Pipeline(Device &d, const PipelineConfigInfo &configInfo, const char *vertexPath, const char *fragmentPath)
-    : device{d} {
-    createPipeline(configInfo, vertexPath, fragmentPath);
-}
-
-Pipeline::~Pipeline() { vkDestroyPipeline(device.GetDevice(), pipeline, nullptr); }
-
-std::vector<char> Pipeline::readFile(const char *path) {
-    namespace fs = std::filesystem;
-    fs::path filePath(std::string(SHADER_DIR) + path);
-    std::string shaderPath = fs::canonical(filePath).generic_string();
-
-    std::ifstream file{shaderPath, std::ios::ate | std::ios::binary};
-
-    if (!file.is_open()) {
-        throw std::runtime_error("Failed to open file: " + shaderPath);
-    }
-
-    size_t fileSize = static_cast<size_t>(file.tellg());
-    std::vector<char> buffer(fileSize);
-
-    file.seekg(0);
-    file.read(buffer.data(), fileSize);
-
-    file.close();
-    return buffer;
-}
-
-void Pipeline::createShaderModule(const std::vector<char> &shader, VkShaderModule *module) {
-    VkShaderModuleCreateInfo createInfo{};
-    createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-    createInfo.pCode = reinterpret_cast<const uint32_t *>(shader.data());
-    createInfo.codeSize = shader.size();
-
-    if (vkCreateShaderModule(device.GetDevice(), &createInfo, nullptr, module)) {
-        throw std::runtime_error("Failed to create shader module");
-    }
-}
-
-void Pipeline::createPipeline(const PipelineConfigInfo &configInfo, const char *vertexPath, const char *fragmentPath) {
-    assert(configInfo.pipelineLayout != VK_NULL_HANDLE && "Failed to create pipeline: no pipelineLayout provided");
-    assert(configInfo.renderPass != VK_NULL_HANDLE && "Failed to create pipeline: no renderPass provided");
-
-    auto vertex = readFile(vertexPath);
-    auto fragment = readFile(fragmentPath);
-
-#ifdef _DEBUG
-    std::cout << "Vertex shader size: " << vertex.size() << std::endl;
-    std::cout << "Fragment shader size: " << fragment.size() << std::endl;
-#endif
-
-    createShaderModule(vertex, &vertexModule);
-    createShaderModule(fragment, &fragmentModule);
-
+Pipeline::Pipeline(ElysiumDependencies &deps, ShaderModule *vertexShader, ShaderModule *fragmentShader,
+                   const PipelineConfigInfo &configInfo)
+    : deps{deps} {
     // STAGES
     VkPipelineShaderStageCreateInfo shaderStages[2];
     shaderStages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     shaderStages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
-    shaderStages[0].module = vertexModule;
+    shaderStages[0].module = vertexShader->GetModule();
     shaderStages[0].pName = "main";
     shaderStages[0].flags = 0;
     shaderStages[0].pNext = nullptr;
@@ -81,7 +22,7 @@ void Pipeline::createPipeline(const PipelineConfigInfo &configInfo, const char *
 
     shaderStages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     shaderStages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-    shaderStages[1].module = fragmentModule;
+    shaderStages[1].module = fragmentShader->GetModule();
     shaderStages[1].pName = "main";
     shaderStages[1].flags = 0;
     shaderStages[1].pNext = nullptr;
@@ -98,6 +39,7 @@ void Pipeline::createPipeline(const PipelineConfigInfo &configInfo, const char *
     vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
 
     // DYNAMIC STATE
+    std::vector<VkDynamicState> dynamicStates = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
     VkPipelineDynamicStateCreateInfo dynamicState{};
     dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
     dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
@@ -124,23 +66,22 @@ void Pipeline::createPipeline(const PipelineConfigInfo &configInfo, const char *
     pipelineInfo.pStages = shaderStages;
     pipelineInfo.pVertexInputState = &vertexInputInfo;
 
-    pipelineInfo.layout = configInfo.pipelineLayout;
-    pipelineInfo.renderPass = configInfo.renderPass;
+    pipelineInfo.layout = deps.pipelineLayout->GetPipelineLayout();
+    pipelineInfo.renderPass = deps.renderPass->GetRenderPass();
     pipelineInfo.subpass = configInfo.subpass;
 
     pipelineInfo.basePipelineIndex = -1;
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 
-    if (vkCreateGraphicsPipelines(device.GetDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &pipeline) !=
+    if (vkCreateGraphicsPipelines(deps.device->GetDevice(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &pipeline) !=
         VK_SUCCESS) {
         throw std::runtime_error("Failed to create pipeline");
     }
-
-    vkDestroyShaderModule(device.GetDevice(), vertexModule, nullptr);
-    vkDestroyShaderModule(device.GetDevice(), fragmentModule, nullptr);
 }
 
-PipelineConfigInfo Pipeline::defaultPipelineConfigInfo(VkRenderPass renderPass, VkPipelineLayout pipelineLayout) {
+Pipeline::~Pipeline() { vkDestroyPipeline(deps.device->GetDevice(), pipeline, nullptr); }
+
+PipelineConfigInfo Pipeline::defaultPipelineConfigInfo() {
     PipelineConfigInfo configInfo{};
 
     configInfo.assemblyInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -152,8 +93,8 @@ PipelineConfigInfo Pipeline::defaultPipelineConfigInfo(VkRenderPass renderPass, 
     configInfo.rasterizationInfo.rasterizerDiscardEnable = VK_FALSE;
     configInfo.rasterizationInfo.polygonMode = VK_POLYGON_MODE_FILL;
     configInfo.rasterizationInfo.lineWidth = 1.0f;
-    configInfo.rasterizationInfo.cullMode = VK_CULL_MODE_NONE;
-    configInfo.rasterizationInfo.frontFace = VK_FRONT_FACE_CLOCKWISE;
+    configInfo.rasterizationInfo.cullMode = VK_CULL_MODE_BACK_BIT;
+    configInfo.rasterizationInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
     configInfo.rasterizationInfo.depthBiasEnable = VK_FALSE;
     configInfo.rasterizationInfo.depthBiasConstantFactor = 0.0f;   // Optional
     configInfo.rasterizationInfo.depthBiasClamp = 0.0f;            // Optional
@@ -197,9 +138,6 @@ PipelineConfigInfo Pipeline::defaultPipelineConfigInfo(VkRenderPass renderPass, 
     configInfo.depthStencilInfo.stencilTestEnable = VK_FALSE;
     configInfo.depthStencilInfo.front = {};   // Optional
     configInfo.depthStencilInfo.back = {};    // Optional
-
-    configInfo.renderPass = renderPass;
-    configInfo.pipelineLayout = pipelineLayout;
 
     return configInfo;
 }

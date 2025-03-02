@@ -10,8 +10,6 @@ struct QueueFamilyIndices {
     bool isComplete() { return graphicsFamily.has_value() && presentFamily.has_value(); }
 };
 
-class QueueFamilies {
-   public:
-    static QueueFamilyIndices FindQueueFamilies(VkSurfaceKHR surface, VkPhysicalDevice device);
-};
+QueueFamilyIndices findQueueFamilies(VkSurfaceKHR surface, VkPhysicalDevice device);
+
 }   // namespace Ely

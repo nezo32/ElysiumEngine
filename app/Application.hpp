@@ -10,9 +10,10 @@ class Application {
     void Run();
 
    private:
-    static constexpr int WIDTH = 1280;
-    static constexpr int HEIGHT = 720;
+    static constexpr int WIDTH = 800;
+    static constexpr int HEIGHT = 600;
     static constexpr const char *APP_NAME = "ZALUPA";
 
-    Ely::Elysium e{WIDTH, HEIGHT, APP_NAME, APP_NAME, Ely::Elysium::GetVersionCode(1, 0, 0)};
+    Ely::ElysiumCreateInfo engineInfo{WIDTH, HEIGHT, APP_NAME, Ely::ElysiumApplicationVersion{1, 0, 0}};
+    Ely::Elysium e{engineInfo};
 };

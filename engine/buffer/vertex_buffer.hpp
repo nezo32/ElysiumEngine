@@ -1,60 +1,25 @@
 #pragma once
 
 #include <array>
+#include <memory>
 
-#include "device/device.hpp"
-#include "device/phys_device.hpp"
-#include "external/glfw.hpp"
-#include "external/glm.hpp"
+#include "buffer.hpp"
 
 namespace Ely {
 
-struct Vertex {
-    glm::vec3 position;
-    glm::vec3 color;
-
-    static VkVertexInputBindingDescription getBindingDescription() {
-        VkVertexInputBindingDescription bindingDescription{};
-        bindingDescription.binding = 0;
-        bindingDescription.stride = sizeof(Vertex);
-        bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-
-        return bindingDescription;
-    }
-
-    static std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions() {
-        std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions{};
-
-        attributeDescriptions[0].binding = 0;
-        attributeDescriptions[0].location = 0;
-        attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-        attributeDescriptions[0].offset = offsetof(Vertex, position);
-
-        attributeDescriptions[1].binding = 0;
-        attributeDescriptions[1].location = 1;
-        attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-        attributeDescriptions[1].offset = offsetof(Vertex, color);
-
-        return attributeDescriptions;
-    }
-};
+struct Vertex;
+struct ElysiumDependencies;
 
 class VertexBuffer {
    private:
-    Device& device;
-    VkBuffer vertexBuffer;
-    VkDeviceMemory vertexBufferMemory;
-
-    VkBufferCreateInfo bufferInfo{};
-    VkMemoryRequirements memRequirements;
+    std::unique_ptr<Buffer> vertexBuffer;
+    uint32_t verticesCount;
 
    public:
-    VertexBuffer(PhysDevice& physDevice, Device& device, size_t verticesSize);
-    ~VertexBuffer();
+    VertexBuffer(ElysiumDependencies& deps, std::vector<Vertex>& vertices);
 
-    void Map(std::vector<Vertex>& vertices);
-
-    VkBuffer GetBuffer() { return vertexBuffer; }
+    VkBuffer GetVertexBuffer() { return vertexBuffer->GetBuffer(); }
+    uint32_t GetVerticesCount() { return verticesCount; }
 };
 
 }   // namespace Ely

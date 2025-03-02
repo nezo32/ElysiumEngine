@@ -1,10 +1,12 @@
-#include "frame_buffer.hpp"
+#include "frame_buffers.hpp"
+
+#include "dependencies.hpp"
 
 namespace Ely {
 
-FrameBuffer::FrameBuffer(Device& d, std::unique_ptr<SwapChain>& swapChain, RenderPass& renderPass) : device{d} {
-    auto swapChainImageViews = swapChain->GetImageViews();
-    auto swapChainExtent = swapChain->GetExtent();
+FrameBuffers::FrameBuffers(ElysiumDependencies &deps) : deps{deps} {
+    auto swapChainImageViews = deps.swapChain->GetImageViews();
+    auto swapChainExtent = deps.swapChain->GetExtent();
     frameBuffers.resize(swapChainImageViews.size());
 
     for (size_t i = 0; i < swapChainImageViews.size(); i++) {
@@ -12,22 +14,22 @@ FrameBuffer::FrameBuffer(Device& d, std::unique_ptr<SwapChain>& swapChain, Rende
 
         VkFramebufferCreateInfo framebufferInfo{};
         framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-        framebufferInfo.renderPass = renderPass.GetRenderPass();
+        framebufferInfo.renderPass = deps.renderPass->GetRenderPass();
         framebufferInfo.attachmentCount = 1;
         framebufferInfo.pAttachments = attachments;
         framebufferInfo.width = swapChainExtent.width;
         framebufferInfo.height = swapChainExtent.height;
         framebufferInfo.layers = 1;
 
-        if (vkCreateFramebuffer(device.GetDevice(), &framebufferInfo, nullptr, &frameBuffers[i]) != VK_SUCCESS) {
+        if (vkCreateFramebuffer(deps.device->GetDevice(), &framebufferInfo, nullptr, &frameBuffers[i]) != VK_SUCCESS) {
             throw std::runtime_error("Failed to create framebuffer");
         }
     }
 }
 
-FrameBuffer::~FrameBuffer() {
+FrameBuffers::~FrameBuffers() {
     for (auto framebuffer : frameBuffers) {
-        vkDestroyFramebuffer(device.GetDevice(), framebuffer, nullptr);
+        vkDestroyFramebuffer(deps.device->GetDevice(), framebuffer, nullptr);
     }
 }
 

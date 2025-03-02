@@ -1,50 +1,91 @@
 #include <memory>
 
-#include "buffer/frame_buffer.hpp"
-#include "command/command_buffer.hpp"
-#include "command/command_pool.hpp"
-#include "device/device.hpp"
-#include "events.hpp"
-#include "pipeline/pipeline.hpp"
-#include "pipeline/pipeline_layout.hpp"
-#include "render_pass.hpp"
+#include "dependencies.hpp"
+#include "descriptor/descriptor_builder.hpp"
 #include "renderer.hpp"
-#include "utils/debug_log.hpp"
-#include "utils/sync.hpp"
-#include "window.hpp"
-
 
 namespace Ely {
 
+struct ElysiumDependencies;
+
 class Elysium {
    private:
-    int width;
-    int height;
+    ElysiumDependencies deps{};
+
+    std::vector<Vertex> vertices = {{{-0.5f, -0.5f, 0.f}, {1.0f, 0.0f, 0.0f}},
+                                    {{0.5f, -0.5f, 0.f}, {0.0f, 1.0f, 0.0f}},
+                                    {{0.5f, 0.5f, 0.f}, {0.0f, 0.0f, 1.0f}},
+                                    {{-0.5f, 0.5f, 0.f}, {1.f, 1.f, 1.f}}};
+    std::vector<uint32_t> indices = {0, 2, 1, 2, 0, 3};
 
    public:
-    Elysium(const int windowWidth, const int windowHeight, const char* windowTitle, const char* appName,
-            const uint32_t appVersion)
-        : window{windowWidth, windowHeight, windowTitle}, vulkan{window, appName, appVersion} {
-        width = windowWidth;
-        height = windowHeight;
+    Renderer* renderer;
+    Window* window;
+
+    Elysium(ElysiumCreateInfo createInfo) {
+        deps.window = new Window(createInfo);
+        window = deps.window;
+
+        deps.vulkan = new Vulkan(createInfo, deps);
+        deps.physDevice = new PhysDevice(deps);
+        deps.device = new Device(deps);
+        deps.swapChain = new SwapChain(deps);
+        deps.renderPass = new RenderPass(deps);
+
+        DescriptorLayoutBuilder builder{};
+        builder.AddBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
+        deps.descriptorLayouts.push_back(new DescriptorLayout(deps, builder.GetBindings()));
+
+        deps.pipelineLayout = new PipelineLayout(deps);
+
+        auto vertexShaderCore = new ShaderModule(deps, "vertex_core.vert.spv");
+        auto fragmentShaderCore = new ShaderModule(deps, "fragment_core.frag.spv");
+
+        deps.pipelines.insert(std::pair<PipelineType, Pipeline*>(
+            PipelineCore,
+            new Pipeline(deps, vertexShaderCore, fragmentShaderCore, Pipeline::defaultPipelineConfigInfo())));
+
+        delete vertexShaderCore;
+        delete fragmentShaderCore;
+
+        deps.frameBuffers = new FrameBuffers(deps);
+        deps.commandPools.insert(std::pair<CommandPoolType, CommandPool*>(CommandPoolCore, new CommandPool(deps)));
+
+        /* deps.uniformBuffers = new UniformBuffers(deps);
+        deps.descriptorPool = new DescriptorPool(deps);
+        deps.descriptorSets = new DescriptorSets(deps); */
+
+        // TODO: move to method
+        deps.meshes.push_back(new Mesh(deps, vertices, indices));
+
+        renderer = new Renderer(deps);
     }
 
-    Window window;
-    Vulkan vulkan;
-    PhysDevice physDevice{vulkan};
-    Device device{vulkan, physDevice};
-    std::unique_ptr<SwapChain> swapChain{std::make_unique<SwapChain>(window, vulkan, physDevice, device)};
-    RenderPass renderPass{device, swapChain};
-    PipelineLayout pipelineLayout{device};
-    Pipeline pipeline{
-        device, Pipeline::defaultPipelineConfigInfo(renderPass.GetRenderPass(), pipelineLayout.GetPipelineLayout()),
-        "vertex_core.vert.spv", "fragment_core.frag.spv"};
-    std::unique_ptr<FrameBuffer> frameBuffer{std::make_unique<FrameBuffer>(device, swapChain, renderPass)};
-    CommandPool commandPool{vulkan, physDevice, device};
-    Renderer renderer{window, vulkan, physDevice, device, commandPool, swapChain, renderPass, frameBuffer, pipeline};
-
-    static uint32_t GetVersionCode(uint32_t major, uint32_t minor, uint32_t patch) {
-        return VK_MAKE_VERSION(major, minor, patch);
+    ~Elysium() {
+        delete deps.frameBuffers;
+        delete deps.swapChain;
+        for (auto& pair : deps.pipelines) {
+            delete pair.second;
+        }
+        delete deps.pipelineLayout;
+        delete deps.renderPass;
+        delete deps.uniformBuffers;
+        delete deps.descriptorPool;
+        for (auto& layout : deps.descriptorLayouts) {
+            delete layout;
+        }
+        for (auto& mesh : deps.meshes) {
+            delete mesh;
+        }
+        for (auto& pair : deps.commandPools) {
+            delete pair.second;
+        }
+        delete renderer;
+        delete deps.device;
+        delete deps.physDevice;
+        delete deps.vulkan;
+        delete deps.window;
     }
 };
+
 }   // namespace Ely
